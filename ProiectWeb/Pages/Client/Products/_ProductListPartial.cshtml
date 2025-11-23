@@ -1,0 +1,94 @@
+﻿@model ProiectWeb.Pages.Client.Products.IndexModel
+
+@if (Model.Products != null && Model.Products.Any())
+{
+    <div class="row">
+        @foreach (var product in Model.Products)
+        {
+            var outOfStock = product.Quantity <= 0;
+
+            <div class="col-lg-4 col-md-6 mb-4 product-item">
+                <div class="card h-100 border-0 shadow-sm position-relative">
+
+                    <!-- Etichetă de stoc -->
+                    @if (outOfStock)
+                    {
+                        <span class="badge bg-danger position-absolute top-0 end-0 m-2 px-3 py-2 shadow-sm" style="font-size:0.8rem;">
+                            Stoc epuizat
+                        </span>
+                    }
+
+                    <!-- Imagine produs -->
+                    <img src="/Imagini/@(string.IsNullOrEmpty(product.Imagine) ? "default.jpg" : product.Imagine)"
+                         onerror="this.onerror=null; this.src='/Imagini/default.jpg';"
+                         class="card-img-top product-image"
+                         alt="@product.Name"
+                         data-id="@product.Id"
+                         data-name="@product.Name"
+                         data-price="@product.Price"
+                         data-description="@product.Description"
+                         style="cursor:pointer;" />
+
+                    <!-- Detalii produs -->
+                    <div class="card-body text-center">
+                        <h5 class="card-title">@product.Name</h5>
+                        <p class="card-text text-success fw-bold mb-2">@product.Price.ToString("0.00") RON</p>
+                        <p class="text-muted small mb-3">
+                            @if (!string.IsNullOrEmpty(product.Category))
+                            {
+                                <text>@product.Category</text>
+                            }
+                            else
+                            {
+                                <text>&nbsp;</text>
+                            }
+                        </p>
+
+                        <!-- Buton Add to Cart -->
+                        <button class="btn btn-cart w-75 add-to-cart-btn"
+                                data-id="@product.Id"
+                                data-name="@product.Name"
+                                data-quantity="1"
+                                @(outOfStock ? "disabled" : "")>
+                            <i class="bi bi-cart-plus"></i> Adaugă în coș
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- PAGINATION -->
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mt-4">
+                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                    <a class="page-link pagination-link" href="#" data-page="@(Model.PageNumber - 1)">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </a>
+                </li>
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link pagination-link" href="#" data-page="@i">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link pagination-link" href="#" data-page="@(Model.PageNumber + 1)">
+                        Următor <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+}
+else
+{
+    <div class="alert alert-info shadow-sm">
+        Nu există produse disponibile în această categorie.
+    </div>
+}

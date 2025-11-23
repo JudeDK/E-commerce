@@ -1,0 +1,58 @@
+﻿@page
+@model ProiectWeb.Pages.Admin.Orders.IndexModel
+@{
+    ViewData["Title"] = "Comenzi - Admin";
+}
+
+<h2 class="mb-4">Panou Comenzi</h2>
+
+@if (Model.Orders.Any())
+{
+    <div class="accordion" id="ordersAccordion">
+        @foreach (var order in Model.Orders)
+        {
+            var collapseId = "collapse" + order.Id;
+            var headingId = "heading" + order.Id;
+            <div class="accordion-item mb-2">
+                <h2 class="accordion-header" id="@headingId">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
+                        <strong>Comandă #@order.Id</strong> — @order.User.Nickname (@order.User.Email) — @order.OrderDate.ToString("dd.MM.yyyy HH:mm")
+                    </button>
+                </h2>
+                <div id="@collapseId" class="collapse">
+                    <div class="accordion-body">
+                        <table class="table table-bordered table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Produs</th>
+                                    <th>Preț</th>
+                                    <th>Cantitate</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in order.Items)
+                                {
+                                    <tr>
+                                        <td>@item.Product.Name</td>
+                                        <td>@item.Product.Price RON</td>
+                                        <td>@item.Quantity</td>
+                                        <td>@(item.Product.Price* item.Quantity) RON</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+
+                        <p class="fw-bold">
+                            Total comandă: @order.Items.Sum(i => i.Product.Price * i.Quantity) RON
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-info">Nu există comenzi înregistrate.</div>
+}

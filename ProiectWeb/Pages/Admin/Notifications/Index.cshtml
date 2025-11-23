@@ -1,0 +1,32 @@
+﻿@page
+@model ProiectWeb.Pages.Admin.Notifications.IndexModel
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<h2>Notifications</h2>
+
+@if (Model.Notifications == null || !Model.Notifications.Any())
+{
+    <div class="alert alert-info">No notifications found.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var notification in Model.Notifications)
+            {
+                <tr>
+                    <td>@notification.DateCreated.ToString("g")</td>
+                    <td>@notification.Message</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

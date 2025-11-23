@@ -1,0 +1,43 @@
+﻿@page "{id:int}"
+@model ProiectWeb.Pages.Admin.Products.EditModel
+@{
+    ViewData["Title"] = "Edit Product";
+}
+
+<h2>Edit Product</h2>
+
+<form method="post">
+    <input type="hidden" asp-for="Product.Id" /> <!-- NECESAR -->
+
+    <div class="form-group">
+        <label asp-for="Product.Name"></label>
+        <input asp-for="Product.Name" class="form-control" />
+        <span asp-validation-for="Product.Name" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Product.Category"></label>
+        <input asp-for="Product.Category" class="form-control" />
+        <span asp-validation-for="Product.Category" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Product.Quantity"></label>
+        <input asp-for="Product.Quantity" class="form-control" />
+        <span asp-validation-for="Product.Quantity" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Product.Price"></label>
+        <input asp-for="Product.Price" class="form-control" />
+        <span asp-validation-for="Product.Price" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label asp-for="Product.Description"></label>
+        <textarea asp-for="Product.Description" class="form-control"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-2">Save</button>
+    <a asp-page="Index" class="btn btn-secondary mt-2">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

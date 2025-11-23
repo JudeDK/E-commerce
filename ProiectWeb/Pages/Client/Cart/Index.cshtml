@@ -1,0 +1,48 @@
+﻿@page
+@model ProiectWeb.Pages.Client.Cart.IndexModel
+@{
+    ViewData["Title"] = "Coșul meu";
+}
+
+<h2>Coșul tău</h2>
+
+@if (Model.CartItems.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Produs</th>
+                <th>Preț</th>
+                <th>Cantitate</th>
+                <th>Total</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.CartItems)
+            {
+                <tr>
+                    <td>@item.ProductName</td>
+                    <td>@item.Price RON</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.Total RON</td>
+                    <td>
+                        <form method="post" asp-page-handler="Remove" asp-route-id="@item.ProductId">
+                            <button class="btn btn-danger btn-sm">Șterge</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h4>Total general: <strong>@Model.Total RON</strong></h4>
+
+    <form method="post" asp-page-handler="Checkout">
+        <button class="btn btn-success">Finalizează comanda</button>
+    </form>
+}
+else
+{
+    <div class="alert alert-info">Coșul tău este gol.</div>
+}

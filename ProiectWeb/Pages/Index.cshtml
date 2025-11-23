@@ -1,0 +1,50 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Acasă";
+    Layout = "_Layout";
+}
+
+<div class="text-center mt-5">
+    <h1 class="display-4 fw-bold text-primary">Bine ați venit la SuperMarket+</h1>
+    <p class="lead mt-3">Tot ce ai nevoie, într-un singur loc!</p>
+
+
+    @if (User.IsInRole("User"))
+    {
+        <!-- Vizibil doar pentru utilizatorii cu rolul Client -->
+        <div class="container mt-4">
+            <p class="fs-5 text-secondary">
+                SuperMarket+ este magazinul tău online de încredere, unde găsești o gamă variată de produse de zi cu zi —
+                de la alimente proaspete, băuturi și produse de curățenie, până la articole pentru casă și îngrijire personală.
+            </p>
+
+            <p class="fs-5 text-secondary">
+                Ne dorim să-ți facem cumpărăturile mai ușoare, rapide și plăcute. Cu doar câteva click-uri poți adăuga produsele dorite
+                în coș și le poți primi direct la tine acasă, economisind timp prețios.
+            </p>
+
+            <p class="fs-5 text-secondary">
+                Echipa noastră este dedicată calității și satisfacției tale. Fie că ești un client fidel sau vizitezi pentru prima dată,
+                îți oferim cele mai bune oferte și promoții la produsele preferate.
+            </p>
+
+            <a asp-page="/Client/Products/Index" class="btn btn-success btn-lg mt-3">
+                Descoperă produsele noastre
+            </a>
+        </div>
+    }
+    else if (!User.Identity.IsAuthenticated)
+    {
+        <!-- Vizibil doar pentru utilizatorii neautentificați -->
+        <div class="mt-5 text-muted">
+            <p class="fs-5">Bine ai venit! Creează-ți un cont sau autentifică-te pentru a descoperi ofertele și produsele noastre.</p>
+
+            <div class="mt-3">
+                <a class="btn btn-register" asp-area="Identity" asp-page="/Account/Register">Register</a>
+                <a class="btn btn-login" asp-area="Identity" asp-page="/Account/Login">Login</a>
+            </div>
+        </div>
+    }
+
+</div>

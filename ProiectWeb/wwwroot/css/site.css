@@ -1,0 +1,341 @@
+﻿/* =========================================================
+   🌐 STIL GENERAL — gradient fix + sticky footer corect
+   ========================================================= */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+    color: #1b1b1b;
+    overflow-x: hidden;
+    transition: background 0.5s ease;
+    background: linear-gradient(180deg, #f4f7fb 0%, #dbe7f5 100%) fixed;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+/* Face ca zona principală să ocupe tot spațiul rămas până la footer */
+main {
+    flex: 1;
+    background: transparent; /* evită gradient dublu */
+}
+
+/* =========================================================
+   🧭 NAVBAR
+   ========================================================= */
+.navbar {
+    background: linear-gradient(90deg, #003366, #0073e6);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+    .navbar:hover {
+        background: linear-gradient(90deg, #004080, #0099ff);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+.navbar-brand {
+    color: #ffffff !important;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    text-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+}
+
+.nav-link {
+    color: #e4e8ee !important;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+}
+
+    .nav-link::after {
+        content: "";
+        position: absolute;
+        width: 0%;
+        height: 2px;
+        bottom: 0;
+        left: 0;
+        background-color: #a8d8ff;
+        transition: width 0.3s ease;
+    }
+
+    .nav-link:hover::after {
+        width: 100%;
+    }
+
+/* =========================================================
+   🔘 BUTOANE
+   ========================================================= */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-login,
+.btn-register {
+    background: #fff;
+    color: #004a99;
+    border: 1px solid #cfd8e3;
+}
+
+    .btn-login:hover,
+    .btn-register:hover {
+        background: #004a99;
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(0, 74, 153, 0.3);
+    }
+
+.btn-cart {
+    background: linear-gradient(90deg, #20c997, #17a589);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 10px rgba(23, 165, 137, 0.4);
+}
+
+    .btn-cart:hover {
+        background: linear-gradient(90deg, #17a589, #138c72);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(23, 165, 137, 0.6);
+    }
+
+.btn-sort {
+    background: linear-gradient(135deg, #0066cc, #003d80);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+    .btn-sort:hover {
+        background: linear-gradient(135deg, #004c99, #001f4d);
+        transform: translateY(-3px) scale(1.03);
+        box-shadow: 0 4px 10px rgba(0, 51, 153, 0.4);
+    }
+
+/* =========================================================
+   🛍️ CARDURI PRODUSE
+   ========================================================= */
+.product-item .card {
+    background-color: #ffffff;
+    border-radius: 14px;
+    border: none;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+    transition: all 0.35s ease;
+}
+
+    .product-item .card:hover {
+        transform: translateY(-7px) scale(1.02);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .product-item .card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(32, 201, 151, 0.1));
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    .product-item .card:hover::before {
+        opacity: 1;
+    }
+
+.product-item .card-img-top {
+    height: 200px;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.product-item .card:hover .card-img-top {
+    transform: scale(1.05);
+}
+
+.card-body {
+    padding: 1rem 1.2rem;
+    text-align: center;
+}
+
+.card-title {
+    font-weight: 500;
+    color: #002b5c;
+    transition: color 0.2s ease;
+}
+
+.product-item .card:hover .card-title {
+    color: #0073e6;
+}
+
+.card-text {
+    font-size: 0.95rem;
+    color: #555;
+}
+
+/* =========================================================
+   💰 SLIDER PREȚ
+   ========================================================= */
+#priceSlider {
+    margin: 10px 0;
+}
+
+.noUi-target {
+    background: #d0d0d0;
+    border-radius: 10px;
+    height: 6px;
+    border: none;
+    box-shadow: none;
+    transition: background 0.3s ease;
+}
+
+.noUi-connect {
+    background: #b0b0b0 !important;
+    transition: background 0.3s ease;
+}
+
+.noUi-handle {
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    background: #f0f0f0;
+    border: 2px solid #b0b0b0;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+    cursor: grab;
+    top: -1px !important;
+    transform: translateX(-8px);
+    transition: all 0.3s ease;
+}
+
+    .noUi-handle:before,
+    .noUi-handle:after {
+        display: none !important;
+    }
+
+.noUi-tooltip {
+    font-size: 0.85rem;
+    background: #fff;
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 3px 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.noUi-target.noUi-state-drag,
+.noUi-target.active {
+    background: #007bff20;
+}
+
+    .noUi-target.noUi-state-drag .noUi-connect,
+    .noUi-target.active .noUi-connect {
+        background: #007bff !important;
+    }
+
+    .noUi-target.noUi-state-drag .noUi-handle,
+    .noUi-target.active .noUi-handle {
+        background: #007bff;
+        border-color: #0056b3;
+    }
+
+/* =========================================================
+   ✨ EFECTE DE FOCUS / ANIMAȚII
+   ========================================================= */
+.btn:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.45);
+    outline: none;
+}
+
+.alert {
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================================
+   🧱 SCROLLBAR
+   ========================================================= */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #e4eaf0;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #007bff, #20c997);
+    border-radius: 10px;
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #0056b3, #17a589);
+    }
+
+/* =========================================================
+   🧱 FOOTER — sticky, elegant, fix final
+   ========================================================= */
+footer {
+    background: linear-gradient(90deg, #003366, #0059b3);
+    color: #e4e8ee;
+    text-align: center;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 -3px 10px rgba(0,0,0,0.1);
+    font-size: 0.9rem;
+    letter-spacing: 0.3px;
+    margin-top: auto;
+}
+
+    footer a {
+        color: #a8d8ff;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+        footer a:hover {
+            color: #ffffff;
+        }
+
+/* =========================================================
+   ⚙️ FLEX WRAPPER pentru sticky footer
+   ========================================================= */
+.layout-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: transparent;
+}
+
+main.flex-grow-1 {
+    flex: 1;
+}
+

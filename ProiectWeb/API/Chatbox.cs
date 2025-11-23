@@ -24,9 +24,7 @@ public static class Chatbox
 
             var question = data.Question.ToLower().Trim();
 
-            // -------------------------------------------------------------------
-            // 🔹 1. Detectare întrebare despre stoc (cu filtru inteligent și Regex)
-            // -------------------------------------------------------------------
+            //intrebari despre stock
             string[] cuvinteStoc =
             {
     "stoc", "pe stoc", "disponibil", "mai aveti", "mai este", "mai sunt",
@@ -55,7 +53,7 @@ public static class Chatbox
                     bool produsMentionat = Regex.IsMatch(question, $@"\b{Regex.Escape(nume)}\b", RegexOptions.IgnoreCase);
                     bool intrebareDespreStoc = cuvinteStoc.Any(c => question.Contains(c)) || cuvinteIntentie.Any(c => question.StartsWith(c));
 
-                    // ✅ Dacă întrebarea e gen "ai banane?" → merge pe aceeași logică de stoc
+                   
                     if (produsMentionat && intrebareDespreStoc)
                     {
                         if (produs.Quantity > 0)
@@ -65,7 +63,7 @@ public static class Chatbox
                     }
                 }
 
-                // ✅ fallback: dacă s-a întrebat de o categorie în loc de produs
+              	//daca s-a intrebat despre o categorie
                 var categorii = await db.Products
                     .Select(p => p.Category.ToLower())
                     .Distinct()
@@ -96,9 +94,7 @@ public static class Chatbox
             }
 
 
-            // -------------------------------------------------------------------
-            // 🔹 3. Întrebări generale despre categorii (ex: „Ce produse sunt la fructe?”)
-            // -------------------------------------------------------------------
+            //generale despre categirie
             string[] cuvinteCategorie =
             {
                 "categorie", "categoriea", "categoriei", "la", "din categoria", "de la",
@@ -131,9 +127,7 @@ public static class Chatbox
                 return Results.Json(new { answer = "Poți te rog să specifici categoria? De exemplu: 'Ce produse aveți la băuturi' sau 'Aveți ceva la fructe'." });
             }
 
-            // -------------------------------------------------------------------
-            // 🔹 4. Dacă nu e întrebare de stoc/categorie — trimite la AI Groq
-            // -------------------------------------------------------------------
+            //orice alta intrebare
             var configuration = app.Services.GetService<IConfiguration>();
             var apiKey = configuration?["Groq:ApiKey"];
 
@@ -154,20 +148,20 @@ public static class Chatbox
                         content = @"Ești un asistent tehnic inteligent și realist al magazinului online.
 Scopul tău este să ajuți clienții să rezolve probleme legate de produse, stocuri, conturi, comenzi și funcționarea site-ului.
 
-💼 RESPONSABILITĂȚI PRINCIPALE:
+ RESPONSABILITĂȚI PRINCIPALE:
 - Oferi informații despre produse, stocuri și disponibilitate.
 - Ghidezi utilizatorii care nu se pot conecta, nu pot crea cont sau au uitat parola.
 - Explici pașii pentru comenzi, plăți, retururi și confirmări.
 - Oferi ajutor la erori tehnice (pagini care nu se încarcă, coș blocat etc.).
 - Poți recomanda pași practici, dar nu inventa informații.
 
-⚠️ LIMITĂRI:
+ LIMITĂRI:
 - Nu poți accesa direct conturile clienților, ci doar să explici cum să procedeze.
 - Nu oferi răspunsuri la întrebări fără legătură cu magazinul (ex: rețete, glume, geografie, cultură generală, sfaturi de viață).
 - Dacă întrebarea nu ține de magazin, răspunde exact cu:
 „Îmi pare rău, pot răspunde doar la întrebări legate de produsele, comenzile sau funcționarea magazinului nostru.”
 
-💬 STIL DE COMUNICARE:
+ STIL DE COMUNICARE:
 - Vorbește natural, clar și politicos, dar fără să fii excesiv de formal.
 - Fii empatic doar atunci când utilizatorul exprimă o problemă sau frustrare reală.
 - Evită să spui expresii precum „îmi pare rău” sau „scuze” la fiecare răspuns — folosește-le doar când e justificat.

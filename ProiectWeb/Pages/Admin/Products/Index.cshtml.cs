@@ -15,7 +15,7 @@ namespace ProiectWeb.Pages.Admin.Products
     {
         private readonly ApplicationDbContext _context;
 
-        private const int PageSize = 15; // ✅ 15 produse/pagină
+        private const int PageSize = 15;
 
         public IndexModel(ApplicationDbContext context)
         {
@@ -37,14 +37,14 @@ namespace ProiectWeb.Pages.Admin.Products
             await LoadProducts(SearchString, PageNumber);
         }
 
-        // ✅ căutare live - returnează doar partial-ul
+        //cautare partiala
         public async Task<IActionResult> OnGetSearchAsync(string searchString, int pageNumber = 1)
         {
             await LoadProducts(searchString, pageNumber);
             return Partial("_ProductListPartial", this);
         }
 
-        // ✅ paginare - returnează doar partial-ul
+        // paginare
         public async Task<IActionResult> OnGetPageAsync(int pageNumber)
         {
             await LoadProducts(SearchString, pageNumber);

@@ -36,11 +36,11 @@
             <a class="btn btn-login" asp-area="Identity" asp-page="/Account/Login">Login</a>
         </li>
 
-        <!-- 💡 Siguranță: dacă userul NU e logat, golește orice chat rămas -->
+        
         <script>
-            // Curăță orice resturi când ajungi neautentificat (ex: după logout)
+            
             sessionStorage.clear();
-            // Dacă ai avut versiuni vechi pe localStorage, curăță și acolo:
+            
             localStorage.removeItem("chat_history"); // legacy key
         </script>
     }
@@ -48,25 +48,19 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    // 1) Atașează pe formularul cu id (varianta principală)
     const logoutForm = document.getElementById("logoutForm");
     if (logoutForm) {
         logoutForm.addEventListener("submit", () => {
-            console.log("🔁 Logout detectat — se șterge istoricul chatului.");
             sessionStorage.clear();
-            // opțional: curăță și localStorage dacă au rămas chei vechi
+            
             localStorage.removeItem("chat_history");
-            // dacă folosești chei per user pe localStorage, poți curăța tot:
-            // localStorage.clear();
         });
     }
 
-    // 2) Fallback: dacă din vreun motiv nu avem id, prindem orice form de logout după action
     if (!logoutForm) {
         const anyLogoutForm = document.querySelector('form[action*="/Account/Logout"]');
         if (anyLogoutForm) {
             anyLogoutForm.addEventListener("submit", () => {
-                console.log("🔁 Logout detectat (fallback) — curăț storage.");
                 sessionStorage.clear();
                 localStorage.removeItem("chat_history");
             });

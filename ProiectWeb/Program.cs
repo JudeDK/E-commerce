@@ -9,14 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 var apiKey = builder.Configuration["OpenAI:ApiKey"];
 
-// 🔹 Configurare baza de date SQLite
+//baza de date sqlite
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString)); // ✅ schimbat din UseSqlServer în UseSqlite
+    options.UseSqlite(connectionString)); //sqlite sv
 
-// 🔹 Configurare Identity fără confirmare e-mail
+//identity fara confirmare email
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -25,14 +25,14 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// 🔹 Servicii suplimentare
+
 builder.Services.AddRazorPages();
 builder.Services.AddSession();
 builder.Services.AddScoped<RecommendationService>();
 
 var app = builder.Build();
 
-// 🔹 Seed roluri și cont admin implicit
+//admin
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -82,7 +82,7 @@ app.UseRouting();
 
 app.UseAuthentication();
 
-// 🔹 Middleware pentru adăugare automată rol "User" dacă lipsește
+//user automat la creare cont
 app.Use(async (context, next) =>
 {
     if (context.User.Identity?.IsAuthenticated ?? false)

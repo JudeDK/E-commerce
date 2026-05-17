@@ -1,0 +1,51 @@
+﻿@page
+@model ProiectWeb.Areas.Admin.Pages.TopFavoritesModel
+@{
+    ViewData["Title"] = "Statistici Favorite";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="bi bi-graph-up-arrow text-primary"></i> Cele mai dorite produse</h2>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th style="width: 50px;">Loc</th>
+                        <th>Produs</th>
+                        <th class="text-center">Nr. Inimioare</th>
+                        <th class="text-center">Preț</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int rank = 1;
+                    }
+                    @foreach (var item in Model.PopularProducts)
+                    {
+                        <tr>
+                            <td class="fw-bold text-muted">#@rank</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="/Imagini/@(string.IsNullOrEmpty(item.Imagine) ? "default.jpg" : item.Imagine)"
+                                         class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold">@item.Name</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-danger rounded-pill px-3">
+                                    <i class="bi bi-heart-fill me-1"></i> @item.Count
+                                </span>
+                            </td>
+                            <td class="text-center text-success fw-bold">@item.Price.ToString("0.00") RON</td>
+                        </tr>
+                        rank++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

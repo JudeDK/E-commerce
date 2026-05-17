@@ -1,0 +1,75 @@
+﻿@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Autentificare";
+}
+
+<style>
+    .auth-card {
+        max-width: 450px;
+        margin: 50px auto;
+        padding: 35px;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 6px 30px rgba(0,0,0,0.12);
+    }
+
+    .auth-title {
+        text-align: center;
+        font-size: 30px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 25px;
+    }
+
+    .auth-links a {
+        color: #3498db;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+        .auth-links a:hover {
+            text-decoration: underline;
+        }
+</style>
+
+<div class="auth-card">
+
+    <div class="auth-title">Autentificare</div>
+
+    <form method="post" id="account">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.Email" class="form-control" autocomplete="username" placeholder="email" />
+            <label asp-for="Input.Email"></label>
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.Password" class="form-control" autocomplete="current-password" placeholder="parola" />
+            <label asp-for="Input.Password"></label>
+            <span asp-validation-for="Input.Password" class="text-danger"></span>
+        </div>
+
+        <div class="d-flex align-items-center mb-3">
+            <input asp-for="Input.RememberMe" class="form-check-input me-2" />
+            <label asp-for="Input.RememberMe"></label>
+        </div>
+
+        <button id="login-submit" type="submit" class="btn btn-primary w-100 btn-lg">
+            Intră în cont
+        </button>
+
+        <div class="auth-links mt-3">
+            <p><a asp-page="./ForgotPassword">Ai uitat parola?</a></p>
+            <p><a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Creează un cont nou</a></p>
+            <p><a asp-page="./ResendEmailConfirmation">Trimite din nou emailul de confirmare</a></p>
+        </div>
+    </form>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

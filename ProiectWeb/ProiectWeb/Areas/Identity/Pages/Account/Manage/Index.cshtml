@@ -1,0 +1,81 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Profilul tău";
+    ViewData["ActivePage"] = ManageNavPages.Index;
+}
+
+<style>
+    .profile-header {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #2c3e50;
+    }
+
+    .initial-circle {
+        width: 80px;
+        height: 80px;
+        background: #ffe082;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 32px;
+        font-weight: bold;
+        margin: 0 auto 10px;
+        border: 3px solid #ffca28;
+    }
+
+    .profile-card {
+        max-width: 480px;
+        padding: 25px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+    }
+
+    .btn-save {
+        background: #ffca28;
+        border: none;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+        .btn-save:hover {
+            background: #ffc107;
+        }
+</style>
+
+<div class="profile-header">
+    <div class="initial-circle">@Model.Username?[0]</div>
+    <h2>@Model.Username</h2>
+</div>
+
+<div class="profile-card">
+
+    <partial name="_StatusMessage" for="StatusMessage" />
+
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Username" class="form-control" disabled />
+            <label asp-for="Username"></label>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.PhoneNumber" class="form-control" />
+            <label asp-for="Input.PhoneNumber"></label>
+            <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-save w-100 btn-lg">
+            Salvează modificările
+        </button>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

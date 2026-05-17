@@ -1,0 +1,129 @@
+﻿@page
+@model ProiectWeb.Areas.Identity.Pages.Account.LoginWith2faModel
+@{
+    ViewData["Title"] = "Autentificare 2FA";
+}
+
+<style>
+    .twofa-card {
+        max-width: 420px;
+        margin: 70px auto;
+        padding: 35px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+        text-align: center;
+    }
+
+    .twofa-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .twofa-subtext {
+        color: #707070;
+        font-size: 15px;
+        margin-bottom: 25px;
+    }
+
+    .otp-container {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .otp-box {
+        width: 50px;
+        height: 55px;
+        font-size: 28px;
+        text-align: center;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+        outline: none;
+        transition: 0.2s;
+        font-weight: bold;
+    }
+
+        .otp-box:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 10px rgba(52,152,219,0.25);
+        }
+
+    .btn-verify {
+        background: #27ae60;
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
+        padding: 12px 0;
+        border-radius: 10px;
+        width: 100%;
+        border: none;
+        transition: 0.2s;
+        margin-top: 10px;
+    }
+
+        .btn-verify:hover {
+            background: #219150;
+        }
+</style>
+
+
+<div class="twofa-card">
+
+    <div class="twofa-title">Verificare 2FA</div>
+
+    <div class="twofa-subtext">
+        Introdu codul de verificare trimis pe email.
+    </div>
+
+    <form method="post" id="twofa-form">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+        <input type="hidden" id="TwoFactorCode" name="TwoFactorCode" />
+
+        <div class="otp-container">
+            <input maxlength="1" class="otp-box" data-index="0" />
+            <input maxlength="1" class="otp-box" data-index="1" />
+            <input maxlength="1" class="otp-box" data-index="2" />
+            <input maxlength="1" class="otp-box" data-index="3" />
+            <input maxlength="1" class="otp-box" data-index="4" />
+            <input maxlength="1" class="otp-box" data-index="5" />
+        </div>
+
+        <button type="submit" class="btn-verify">Verifică</button>
+    </form>
+</div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const inputs = document.querySelectorAll(".otp-box");
+        const hiddenInput = document.getElementById("TwoFactorCode");
+
+        inputs[0].focus();
+
+        inputs.forEach((box, index) => {
+            box.addEventListener("input", () => {
+                box.value = box.value.replace(/[^0-9]/g, "");
+
+                if (box.value && index < 5)
+                    inputs[index + 1].focus();
+
+                updateHidden();
+            });
+
+            box.addEventListener("keydown", (e) => {
+                if (e.key === "Backspace" && !box.value && index > 0)
+                    inputs[index - 1].focus();
+            });
+        });
+
+        function updateHidden() {
+            hiddenInput.value = Array.from(inputs).map(i => i.value).join("");
+        }
+    });
+</script>

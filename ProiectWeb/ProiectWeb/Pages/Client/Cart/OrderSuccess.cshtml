@@ -1,0 +1,44 @@
+﻿@page
+@model ProiectWeb.Pages.Client.Cart.OrderSuccessModel
+@{
+    ViewData["Title"] = "Plată Reușită";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="card shadow border-0">
+                <div class="card-body p-5">
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                    </div>
+                    <h2 class="fw-bold text-dark">Plată confirmată!</h2>
+                    <p class="text-muted">Îți mulțumim pentru comandă. Tranzacția a fost procesată cu succes prin Stripe (Mod Test).</p>
+                    <hr class="my-4">
+                    <p class="mb-4">Produsele tale vor fi pregătite pentru livrare în cel mai scurt timp.</p>
+
+                    <div class="d-grid gap-2">
+                        <a href="/Client/Products/Index" class="btn btn-primary btn-lg">
+                            <i class="bi bi-house-door"></i> Înapoi la Magazin
+                        </a>
+                        <a href="/Client/Istoric" class="btn btn-outline-secondary">
+                            <i class="bi bi-list-check"></i> Vezi comenzile mele
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-muted small">
+                ID Tranzacție: <span class="badge bg-light text-dark">@Request.Query["sessionId"]</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+    .card {
+        border-radius: 15px;
+    }
+</style>

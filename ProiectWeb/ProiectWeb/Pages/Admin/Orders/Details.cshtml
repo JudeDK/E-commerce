@@ -1,0 +1,36 @@
+﻿@page "{id:int}"
+@model ProiectWeb.Pages.Admin.Orders.DetailsModel
+@{
+    ViewData["Title"] = "Detalii Comandă";
+}
+
+<h2>Comanda #@Model.Order.Id</h2>
+
+<p><strong>User:</strong> @Model.Order.User.Nickname (@Model.Order.User.Email)</p>
+<p><strong>Data:</strong> @Model.Order.OrderDate</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Produs</th>
+            <th>Preț</th>
+            <th>Cantitate</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.Order.Items)
+        {
+            <tr>
+                <td>@item.Product.Name</td>
+                <td>@item.Product.Price RON</td>
+                <td>@item.Quantity</td>
+                <td>@(item.Product.Price* item.Quantity) RON</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p><strong>Total comandă: </strong>@Model.Order.Items.Sum(i => i.Product.Price * i.Quantity) RON</p>
+
+<a class="btn btn-secondary" asp-page="/Admin/Orders/Index">Înapoi la comenzi</a>

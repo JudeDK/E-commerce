@@ -1,0 +1,82 @@
+﻿@page
+@model ResendEmailConfirmationModel
+@{
+    ViewData["Title"] = "Retrimite emailul de confirmare";
+}
+
+<style>
+    .resend-card {
+        max-width: 420px;
+        margin: 70px auto;
+        padding: 35px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+        text-align: center;
+    }
+
+    .resend-title {
+        font-size: 26px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .resend-subtext {
+        color: #707070;
+        font-size: 15px;
+        margin-bottom: 25px;
+    }
+
+    .email-icon {
+        font-size: 38px;
+        color: #f39c12;
+        margin-bottom: 15px;
+    }
+
+    .btn-resend {
+        background: #f39c12;
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
+        padding: 12px 0;
+        border-radius: 10px;
+        width: 100%;
+        border: none;
+        transition: 0.2s;
+        margin-top: 10px;
+    }
+
+        .btn-resend:hover {
+            background: #e08e0b;
+        }
+</style>
+
+<div class="resend-card">
+
+    <i class="bi bi-envelope-check-fill email-icon"></i>
+
+    <div class="resend-title">Retrimite emailul de confirmare</div>
+
+    <div class="resend-subtext">
+        Reintrodu adresa ta de email.
+        Îți vom retrimite linkul de confirmare pentru activarea contului.
+    </div>
+
+    <form method="post">
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.Email" class="form-control" placeholder="email@example.com" aria-required="true" />
+            <label asp-for="Input.Email"></label>
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn-resend">Trimite din nou</button>
+    </form>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

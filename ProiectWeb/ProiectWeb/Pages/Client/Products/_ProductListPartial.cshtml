@@ -1,0 +1,98 @@
+﻿@model ProiectWeb.Pages.Client.Products.IndexModel
+
+@if (Model.Products != null && Model.Products.Any())
+{
+    <div class="row">
+        @foreach (var product in Model.Products)
+        {
+            var outOfStock = product.Quantity <= 0;
+            var isFavorite = Model.UserFavoriteIds.Contains(product.Id);
+
+            <div class="col-lg-4 col-md-6 mb-4 product-item">
+                @* Adăugăm clasa product-card pentru a controla hover-ul *@
+                <div class="card h-100 border-0 shadow-sm position-relative product-card">
+
+                    @if (outOfStock)
+                    {
+                        <span class="badge bg-danger position-absolute top-0 start-0 m-2 px-3 py-2 shadow-sm" style="font-size:0.8rem; z-index: 5;">
+                            Stoc epuizat
+                        </span>
+                    }
+
+                    @* Butonul de Favorite - Curățat de clasele de fundal Bootstrap *@
+                    <button class="fav-btn" data-id="@product.Id" title="Adaugă la favorite">
+                        <i class="bi @(isFavorite ? "bi-heart-fill active" : "bi-heart")"></i>
+                    </button>
+
+                    <img src="/Imagini/@(string.IsNullOrEmpty(product.Imagine) ? "default.jpg" : product.Imagine)"
+                         onerror="this.onerror=null; this.src='/Imagini/default.jpg';"
+                         class="card-img-top product-image"
+                         alt="@product.Name"
+                         data-id="@product.Id"
+                         data-name="@product.Name"
+                         data-price="@product.Price"
+                         data-description="@product.Description"
+                         style="cursor:pointer;" />
+
+                    <div class="card-body text-center">
+                        <h5 class="card-title">@product.Name</h5>
+                        <p class="card-text text-success fw-bold mb-2">@product.Price.ToString("0.00") RON</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Page navigation" class="mt-5">
+            <ul class="pagination pagination-sm justify-content-center shadow-sm">
+
+                @* Prima Pagină *@
+                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                    <a class="page-link pagination-link" href="#" data-page="1" title="Prima pagină">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+
+                @* Săgeată Înapoi *@
+                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                    <a class="page-link pagination-link" href="#" data-page="@(Model.PageNumber - 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, Model.PageNumber + 2);
+
+                    if (Model.PageNumber <= 3) endPage = Math.Min(Model.TotalPages, 5);
+                    if (Model.PageNumber > Model.TotalPages - 3) startPage = Math.Max(1, Model.TotalPages - 4);
+                }
+
+                @* Paginile Numerice *@
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link pagination-link" href="#" data-page="@i">@i</a>
+                    </li>
+                }
+
+                @* Săgeată Înainte *@
+                <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link pagination-link" href="#" data-page="@(Model.PageNumber + 1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+
+                @* Ultima Pagină *@
+                <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link pagination-link" href="#" data-page="@Model.TotalPages" title="Ultima pagină">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+}

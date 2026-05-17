@@ -1,0 +1,140 @@
+﻿@page
+@model ProiectWeb.Pages.Client.StatisticiModel
+@{
+    ViewData["Title"] = "Statistici Personale";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">Analiza Cumpărăturilor</h2>
+            <p class="text-muted">Vezi evoluția cheltuielilor tale și distribuția pe categorii</p>
+        </div>
+
+        <form method="get" id="filterForm">
+            <select name="luni" class="form-select shadow-sm" onchange="document.getElementById('filterForm').submit()" style="border-radius: 10px; width: 180px;">
+                <option value="3" selected="@(Request.Query["luni"] == "3")">Ultimele 3 luni</option>
+                <option value="6" selected="@(Request.Query["luni"] == "6" || string.IsNullOrEmpty(Request.Query["luni"]))">Ultimele 6 luni</option>
+                <option value="12" selected="@(Request.Query["luni"] == "12")">Ultimul an</option>
+            </select>
+        </form>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 20px; background: linear-gradient(145deg, #ffffff, #f8f9fa);">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success bg-opacity-10 p-2 rounded-circle me-3">
+                        <i class="bi bi-wallet2 text-success fs-4"></i>
+                    </div>
+                    <span class="text-muted fw-medium">Luna Curentă</span>
+                </div>
+                <h2 class="fw-bold mb-1">@Model.TotalLunaCurenta.ToString("N2") RON</h2>
+
+                @if (Model.DiferentaProcentuala != 0)
+                {
+                    <div class="mt-2">
+                        @if (Model.DiferentaProcentuala > 0)
+                        {
+                            <span class="badge bg-danger bg-opacity-10 text-danger p-2" style="border-radius: 8px;">
+                                <i class="bi bi-graph-up-arrow"></i> +@Model.DiferentaProcentuala.ToString("F1")% vs luna trecută
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success bg-opacity-10 text-success p-2" style="border-radius: 8px;">
+                                <i class="bi bi-graph-down-arrow"></i> @Model.DiferentaProcentuala.ToString("F1")% vs luna trecută
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 20px;">
+                <h5 class="fw-bold mb-4"><i class="bi bi-activity me-2"></i>Istoric Cheltuieli</h5>
+                <canvas id="lineChart" style="max-height: 350px;"></canvas>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm p-4 h-100" style="border-radius: 20px;">
+                <h5 class="fw-bold mb-4"><i class="bi bi-pie-chart me-2"></i>Categorii</h5>
+                <canvas id="pieChart" style="max-height: 350px;"></canvas>
+                <div id="noDataMessage" class="text-center text-muted mt-4" style="display:none;">
+                    Nu există date pentru categorii.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        // Preluăm datele injectate din Modelul C#
+        const dataEvolutie = @Html.Raw(Model.DateGraficJson);
+        const dataCategorii = @Html.Raw(Model.DateCategoriiJson);
+
+        // --- Configurare Grafic Linie ---
+        const ctxLine = document.getElementById('lineChart').getContext('2d');
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: dataEvolutie.map(d => d.Eticheta),
+                datasets: [{
+                    label: 'Cheltuieli (RON)',
+                    data: dataEvolutie.map(d => d.Total),
+                    borderColor: '#009e60', // Verdele tău Glovo
+                    backgroundColor: 'rgba(0, 158, 96, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#009e60'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // --- Configurare Grafic Pie ---
+        if (dataCategorii.length > 0) {
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: dataCategorii.map(d => d.Categorie),
+                    datasets: [{
+                        data: dataCategorii.map(d => d.Suma),
+                        backgroundColor: [
+                            '#009e60', '#ffc107', '#17a2b8', '#dc3545', '#6610f2', '#fd7e14'
+                        ],
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                    }
+                }
+            });
+        } else {
+            document.getElementById('pieChart').style.display = 'none';
+            document.getElementById('noDataMessage').style.display = 'block';
+        }
+    </script>
+}

@@ -1,0 +1,78 @@
+﻿@page
+@model ProiectWeb.Pages.Client.Cart.IndexModel
+@{
+    ViewData["Title"] = "Coșul meu";
+}
+
+<div class="container py-4">
+    <h2><i class="bi bi-cart3"></i> Coșul tău</h2>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+            @TempData["Message"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model.CartItems.Any())
+    {
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Produs</th>
+                            <th>Preț</th>
+                            <th>Cantitate</th>
+                            <th>Total</th>
+                            <th>Acțiuni</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.CartItems)
+                        {
+                            <tr>
+                                <td class="fw-bold">@item.ProductName</td>
+                                <td>@item.Price.ToString("0.00") RON</td>
+                                <td>
+                                    <span class="badge bg-secondary rounded-pill">@item.Quantity</span>
+                                </td>
+                                <td class="fw-bold text-primary">@item.Total.ToString("0.00") RON</td>
+                                <td>
+                                    <form method="post" asp-page-handler="Remove" asp-route-id="@item.ProductId">
+                                        <button class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i> Șterge
+                                        </button>
+                                        @Html.AntiForgeryToken()
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <h4 class="mb-0">Total general: <strong class="text-success">@Model.Total.ToString("0.00") RON</strong></h4>
+
+                <form method="post" asp-page-handler="Checkout">
+                    <button class="btn btn-primary btn-lg">
+                        <i class="bi bi-credit-card"></i> Plătește
+                    </button>
+                    @Html.AntiForgeryToken()
+                </form>
+            </div>
+        </div>
+        <div class="mt-3 text-muted small">
+            <i class="bi bi-shield-lock"></i> Plată procesată securizat prin Stripe (Mod Test)
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-cart-x display-1 text-muted"></i>
+            <h3 class="mt-3">Coșul tău este gol.</h3>
+            <a href="/Client/Products" class="btn btn-primary mt-3">Mergi la cumpărături</a>
+        </div>
+    }
+</div>

@@ -1,0 +1,71 @@
+﻿@page
+@model RegisterModel
+@{
+    ViewData["Title"] = "Înregistrare";
+}
+
+<style>
+    .register-card {
+        max-width: 450px;
+        margin: 50px auto;
+        padding: 35px;
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 6px 30px rgba(0,0,0,0.12);
+    }
+
+    .register-title {
+        text-align: center;
+        font-size: 28px;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 25px;
+    }
+</style>
+
+<div class="register-card">
+
+    <div class="register-title">Creează un cont nou</div>
+
+    <form method="post" asp-route-returnUrl="@Model.ReturnUrl">
+
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.Email" class="form-control" placeholder="email" />
+            <label asp-for="Input.Email"></label>
+            <span asp-validation-for="Input.Email" class="text-danger"></span>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.Nickname" class="form-control" placeholder="nickname" />
+            <label asp-for="Input.Nickname"></label>
+            <span asp-validation-for="Input.Nickname" class="text-danger"></span>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.Password" class="form-control" placeholder="parola" />
+            <label asp-for="Input.Password"></label>
+            <span asp-validation-for="Input.Password" class="text-danger"></span>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input asp-for="Input.ConfirmPassword" class="form-control" placeholder="parola" />
+            <label asp-for="Input.ConfirmPassword"></label>
+            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+        </div>
+
+        <button id="registerSubmit" type="submit" class="btn btn-primary w-100 btn-lg">
+            Creează contul
+        </button>
+
+        <p class="text-center mt-3">
+            Ai deja un cont? <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl">Autentifică-te</a>
+        </p>
+    </form>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

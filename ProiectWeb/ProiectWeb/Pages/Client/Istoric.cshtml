@@ -1,0 +1,102 @@
+﻿@page
+@model ProiectWeb.Pages.Client.IstoricModel
+@{
+    ViewData["Title"] = "Istoric Comenzi";
+}
+
+<div class="container py-5">
+    <h2 class="mb-4"><i class="bi bi-clock-history"></i> Istoricul Comenzilor Tale</h2>
+
+    @if (Model.Orders != null && Model.Orders.Any())
+    {
+        <div class="accordion" id="ordersAccordion">
+            @foreach (var order in Model.Orders)
+            {
+                var collapseId = "collapse_" + order.Id;
+                var headingId = "heading_" + order.Id;
+
+                // 🧮 Calculăm totalul pe loc, deoarece nu este salvat în baza de date
+                // Suma (Cantitate * Preț) pentru fiecare produs din listă
+                decimal orderTotal = order.Items.Sum(i => i.Quantity * (i.Product?.Price ?? 0));
+
+                <div class="accordion-item shadow-sm mb-3 border">
+                    <h2 class="accordion-header" id="@headingId">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
+                            <div class="d-flex w-100 justify-content-between align-items-center pe-3 flex-wrap">
+                                <div>
+                                    <strong>Comanda #@order.Id</strong>
+                                    <span class="text-muted ms-2 small">
+                                        <i class="bi bi-calendar"></i> @order.OrderDate.ToString("dd MMM yyyy, HH:mm")
+                                    </span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-success me-3">Plasată</span>
+                                    <span class="fw-bold text-primary">@orderTotal.ToString("0.00") RON</span>
+                                </div>
+                            </div>
+                        </button>
+                    </h2>
+                    <div id="@collapseId" class="accordion-collapse collapse" aria-labelledby="@headingId" data-bs-parent="#ordersAccordion">
+                        <div class="accordion-body bg-light">
+
+                            <div class="table-responsive">
+                                <table class="table table-sm table-borderless align-middle mb-0">
+                                    <thead class="bg-white border-bottom">
+                                        <tr class="text-muted">
+                                            <th>Produs</th>
+                                            <th class="text-center">Cantitate</th>
+                                            <th class="text-end">Preț unitar</th>
+                                            <th class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in order.Items)
+                                        {
+                                            // Verificăm dacă produsul mai există (nu e null)
+                                            var price = item.Product?.Price ?? 0;
+                                            var rowTotal = item.Quantity * price;
+                                            var imgName = string.IsNullOrEmpty(item.Product?.Imagine) ? "default.jpg" : item.Product.Imagine;
+
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <img src="/Imagini/@imgName"
+                                                             onerror="this.src='/Imagini/default.jpg'"
+                                                             style="width: 40px; height: 40px; object-fit: cover; border-radius:4px;" class="me-2 border">
+                                                        <span>@(item.Product?.Name ?? "Produs indisponibil")</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">x @item.Quantity</td>
+                                                <td class="text-end">@price.ToString("0.00") RON</td>
+                                                <td class="text-end fw-bold">@rowTotal.ToString("0.00") RON</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot class="border-top bg-white">
+                                        <tr>
+                                            <td colspan="3" class="text-end fw-bold pt-3">Total Comandă:</td>
+                                            <td class="text-end fw-bold text-primary fs-5 pt-3">@orderTotal.ToString("0.00") RON</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <div class="mb-3">
+                <i class="bi bi-cart-x display-1 text-muted"></i>
+            </div>
+            <h3 class="mt-3">Nu ai plasat nicio comandă încă.</h3>
+            <p class="text-muted">Te invităm să explorezi catalogul nostru de produse.</p>
+            <a href="/Client/Products" class="btn btn-primary mt-2 px-4 py-2 rounded-pill">
+                Mergi la Magazin
+            </a>
+        </div>
+    }
+</div>

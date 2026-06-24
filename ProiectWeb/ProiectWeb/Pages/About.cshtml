@@ -1,0 +1,110 @@
+@page
+@model ProiectWeb.Pages.AboutModel
+@{
+    ViewData["Title"] = "Despre noi";
+}
+
+<div class="ec-about-hero mb-5">
+    <p class="ec-kicker">Cine suntem</p>
+    <h1>Un magazin online făcut de oameni, pentru oameni.</h1>
+    <p class="ec-about-lead">
+        E-commerce e locul unde vindem ce am selectat noi:
+        produse pentru casă, masă, birou și timp liber. Suntem o echipă mică, obosită uneori,
+        dar mândră de fiecare comandă pe care o pregătim cu atenție.
+    </p>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-lg-7">
+        <div class="ec-prose-card h-100">
+            <h2>Povestea noastră</h2>
+            <p>
+                Totul a început cu un depozit modest și o listă scurtă de produse pe care le-am folosit
+                și noi acasă. Clienții au venit prin recomandare — „știu că acolo găsesc ce trebuie”.
+                Am crescut lent, am adăugat categorii noi și am învățat să ținem stocul la zi fără
+                să compromitem calitatea.
+            </p>
+            <p>
+                Astăzi vindem electronice, alimente, articole pentru casă, îmbrăcăminte și produse sport.
+                Fiecare categorie e aleasă pentru că avem clienți care o caută, nu pentru că „arată bine
+                în catalog”.
+            </p>
+            <p class="mb-0">
+                Muncim direct cu furnizori de încredere, verificăm recepțiile și nu promitem ce nu putem
+                onora. E simplu, dar ne ține ocupați — și ne place așa.
+            </p>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="ec-side-card h-100">
+            <h3>În cifre, pe scurt</h3>
+            <dl class="ec-facts">
+                <div>
+                    <dt>Echipă</dt>
+                    <dd>8 persoane — depozit, comenzi, suport</dd>
+                </div>
+                <div>
+                    <dt>Sediu</dt>
+                    <dd>București, Str. Comerțului 10</dd>
+                </div>
+                <div>
+                    <dt>Contact</dt>
+                    <dd>raresmarian3344@gmail.com</dd>
+                </div>
+                <div>
+                    <dt>Program depozit</dt>
+                    <dd>Luni–Vineri, 08:00–17:00</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="ec-value-card">
+            <span class="ec-value-num">01</span>
+            <h4>Produse reale</h4>
+            <p>Vindem ce avem pe stoc. Dacă e epuizat, îl scoatem din vitrină — nu te ținem cu promisiuni.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ec-value-card">
+            <span class="ec-value-num">02</span>
+            <h4>Prețuri clare</h4>
+            <p>Marje rezonabile, afișate direct în magazin. Știi din start cât plătești.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="ec-value-card">
+            <span class="ec-value-num">03</span>
+            <h4>Suport pe email</h4>
+            <p>Întrebări despre comandă sau produs? Scrie-ne — răspund colegii noștri, nu un mesaj automat.</p>
+        </div>
+    </div>
+</div>
+
+@if (Model.Categories.Any())
+{
+    <section class="mb-5">
+        <h2 class="ec-section-title">Ce vindem</h2>
+        <p class="ec-section-sub">Categoriile active din magazinul nostru.</p>
+        <div class="ec-cat-chips">
+            @foreach (var cat in Model.Categories)
+            {
+                <span class="ec-cat-chip">@cat</span>
+            }
+        </div>
+    </section>
+}
+
+<div class="ec-cta-strip">
+    <div>
+        <h2 class="mb-1">Vrei să ne cunoști mai bine?</h2>
+        <p class="mb-0 text-muted">Scrie-ne pe email sau treci pe la depozit în program.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-page="/Contact" class="btn btn-ec-primary">Contact</a>
+        <a asp-page="/Client/Products/Index" class="btn btn-ec-ghost">Magazin</a>
+    </div>
+</div>

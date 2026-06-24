@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using ProiectWeb.Data;
 using ProiectWeb.Models;
-using System.Collections.Generic;
+using ProiectWeb.Services;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -57,7 +57,15 @@ namespace ProiectWeb.Pages.Admin.Products
 
             if (!string.IsNullOrWhiteSpace(searchString))
             {
-                query = query.Where(p => EF.Functions.Like(p.Name.ToLower(), $"%{searchString.ToLower()}%"));
+                var ids = await _context.Products
+                    .AsNoTracking()
+                    .Select(p => new { p.Id, p.Name })
+                    .ToListAsync();
+                var matchingIds = ids
+                    .Where(p => TextNormalization.ContainsNormalized(p.Name, searchString))
+                    .Select(p => p.Id)
+                    .ToList();
+                query = query.Where(p => matchingIds.Contains(p.Id));
             }
 
             int totalProducts = await query.CountAsync();

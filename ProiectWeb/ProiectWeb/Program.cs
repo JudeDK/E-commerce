@@ -5,6 +5,7 @@ using ProiectWeb.API;
 using ProiectWeb.Data;
 using ProiectWeb.Models;
 using ProiectWeb.Services;
+using Microsoft.Extensions.FileProviders;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -38,6 +39,9 @@ builder.Services
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddScoped<TwoFactorService>();
 builder.Services.AddScoped<RecommendationService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<PrescriptivePricingService>();
+builder.Services.AddSingleton<ProductImageService>();
 builder.Services.AddRazorPages();
 
 builder.Services.AddSession(options => {
@@ -47,6 +51,16 @@ builder.Services.AddSession(options => {
 });
 
 var app = builder.Build();
+
+if (args.Contains("--sync-product-images"))
+{
+    using var syncScope = app.Services.CreateScope();
+    var db = syncScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var images = syncScope.ServiceProvider.GetRequiredService<ProductImageService>();
+    var count = await images.SyncProductImagesAsync(db);
+    Console.WriteLine($"Sincronizare imagini: {count} produse actualizate. Folder: {images.ImaginiDirectory}");
+    return;
+}
 
 // =======================
 // CREATE DEFAULT ADMIN
@@ -83,6 +97,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+var imaginiPath = ProductImageService.ResolveImaginiDirectory(app.Environment);
+if (Directory.Exists(imaginiPath))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(imaginiPath),
+        RequestPath = "/Imagini"
+    });
+}
+
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
@@ -92,7 +117,7 @@ app.UseAuthorization();
 // ==========================================
 // ENDPOINT EXECUTARE COMANDĂ (Nou adăugat)
 // ==========================================
-app.MapPost("/api/chat/execute-order", async (HttpContext httpContext, ApplicationDbContext db, IEmailSender emailSender, OrderPayload order) =>
+app.MapPost("/api/chat/execute-order", async (HttpContext httpContext, ApplicationDbContext db, IEmailSender emailSender, NotificationService notifications, OrderPayload order) =>
 {
     // Verificăm dacă cel care apasă este Admin
     if (!httpContext.User.IsInRole("Admin"))
@@ -105,6 +130,9 @@ app.MapPost("/api/chat/execute-order", async (HttpContext httpContext, Applicati
     // 1. Actualizăm stocul în baza de date
     product.Quantity += order.Quantity;
     await db.SaveChangesAsync();
+
+    await notifications.AddAsync(
+        $"Comandă AI acceptată: +{order.Quantity} buc. la «{order.ProductName}» (stoc nou: {product.Quantity}).");
 
     // 2. Trimitem E-mail către furnizor
     // Aici poți pune adresa ta de mail pentru test sau o adresă de furnizor

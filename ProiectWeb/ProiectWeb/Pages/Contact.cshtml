@@ -1,0 +1,66 @@
+@page
+@model ProiectWeb.Pages.ContactModel
+@{
+    ViewData["Title"] = "Contact";
+}
+
+<div class="ec-about-hero mb-5">
+    <p class="ec-kicker">Suntem aici</p>
+    <h1>Scrie-ne sau sună-ne.</h1>
+    <p class="ec-about-lead mb-0">
+        Fie că ai o întrebare despre un produs, vrei să schimbi ceva la comandă sau pur și simplu
+        vrei să ne spui „mulțumesc” — scrie-ne pe email. De obicei răspundem în aceeași zi lucrătoare.
+    </p>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="ec-side-card h-100">
+            <h3 class="mb-4">Unde ne găsești</h3>
+            <div class="ec-contact-item"><strong>Adresă depozit</strong>Str. Comerțului 10, București</div>
+            <div class="ec-contact-item"><strong>Email</strong>raresmarian3344@gmail.com</div>
+            <div class="ec-contact-item"><strong>Telefon</strong>+40 700 000 000</div>
+            <div class="ec-contact-item"><strong>Program birou</strong>Luni–Vineri, 09:00–18:00</div>
+            <p class="small text-muted mt-3 mb-0">
+                Pentru ridicare personală, anunță-ne cu o zi înainte ca să pregătim coletul.
+            </p>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="ec-prose-card">
+            <h3 class="mb-4">Trimite un mesaj</h3>
+            @if (Model.Submitted)
+            {
+                <div class="alert alert-success border-0">Mulțumim — am primit mesajul și revenim curând.</div>
+            }
+            else
+            {
+                <form method="post" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" required minlength="2" maxlength="100" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" type="email" class="form-control" required
+                               pattern="^[a-zA-Z0-9._%+\-]+@@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$"
+                               title="Introduceți un email valid (ex: nume@gmail.com)" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Message" class="form-label"></label>
+                        <textarea asp-for="Message" class="form-control" rows="5" required minlength="10" maxlength="2000" placeholder="Ex: Vreau să știu dacă aveți..."></textarea>
+                        <span asp-validation-for="Message" class="text-danger small"></span>
+                    </div>
+                    <button type="submit" class="btn btn-ec-primary">Trimite</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

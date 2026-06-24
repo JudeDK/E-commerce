@@ -5,16 +5,18 @@
 }
 
 <div class="container mt-4">
-    <h2 class="mb-4"><i class="bi bi-graph-up-arrow text-primary"></i> Cele mai dorite produse</h2>
+    <div class="ec-page-header mb-4">
+        <h1>Cele mai dorite produse</h1>
+        <p class="text-muted mb-0">Produsele adăugate cel mai des la favorite.</p>
+    </div>
 
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
+    <div class="ec-admin-table-wrap">
+        <table class="table ec-admin-table align-middle mb-0">
+                <thead>
                     <tr>
                         <th style="width: 50px;">Loc</th>
                         <th>Produs</th>
-                        <th class="text-center">Nr. Inimioare</th>
+                        <th class="text-center">Salvări</th>
                         <th class="text-center">Preț</th>
                     </tr>
                 </thead>
@@ -28,7 +30,7 @@
                             <td class="fw-bold text-muted">#@rank</td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <img src="/Imagini/@(string.IsNullOrEmpty(item.Imagine) ? "default.jpg" : item.Imagine)"
+                                    <img src="@ProductImages.GetUrlByName(item.Name, item.Imagine)"
                                          class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
                                     <div>
                                         <div class="fw-bold">@item.Name</div>
@@ -36,16 +38,13 @@
                                 </div>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-danger rounded-pill px-3">
-                                    <i class="bi bi-heart-fill me-1"></i> @item.Count
-                                </span>
+                                <span class="badge bg-light text-dark border">@item.Count</span>
                             </td>
                             <td class="text-center text-success fw-bold">@item.Price.ToString("0.00") RON</td>
                         </tr>
                         rank++;
                     }
                 </tbody>
-            </table>
-        </div>
+        </table>
     </div>
 </div>

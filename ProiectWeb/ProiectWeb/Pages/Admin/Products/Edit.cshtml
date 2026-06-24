@@ -1,82 +1,59 @@
 ﻿@page "{id:int}"
 @model ProiectWeb.Pages.Admin.Products.EditModel
 @{
-    ViewData["Title"] = "Edit Product";
+    ViewData["Title"] = "Editează produs";
 }
 
-<div class="container mt-4">
-    <h2>Editează Produs</h2>
-    <hr />
+<div class="ec-admin-header mb-4">
+    <h2>Editează produs</h2>
+</div>
 
-    <div class="row">
-        <div class="col-md-8">
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="ec-admin-form-card">
             <form method="post" enctype="multipart/form-data">
-
-                <div asp-validation-summary="All" class="alert alert-danger" role="alert"
-                     style="display: @(ViewData.ModelState.IsValid ? "none" : "block")">
-                </div>
-
+                <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
                 <input type="hidden" asp-for="Product.Id" />
                 <input type="hidden" asp-for="Product.Imagine" />
 
-                <div class="mb-3">
-                    <label asp-for="Product.Name" class="form-label">Nume Produs</label>
-                    <input asp-for="Product.Name" class="form-control" />
-                    <span asp-validation-for="Product.Name" class="text-danger"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Product.Category" class="form-label">Categorie</label>
-                    <input asp-for="Product.Category" class="form-control" />
-                    <span asp-validation-for="Product.Category" class="text-danger"></span>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Product.Price" class="form-label">Preț (RON)</label>
-                        <input asp-for="Product.Price" class="form-control" type="number" step="0.01" />
-                        <span asp-validation-for="Product.Price" class="text-danger"></span>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Product.Name" class="form-label fw-semibold"></label>
+                        <input asp-for="Product.Name" class="form-control" />
+                        <span asp-validation-for="Product.Name" class="text-danger small"></span>
                     </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="Product.Quantity" class="form-label">Stoc</label>
-                        <input asp-for="Product.Quantity" class="form-control" type="number" />
-                        <span asp-validation-for="Product.Quantity" class="text-danger"></span>
+                    <div class="col-md-6">
+                        <label asp-for="Product.Category" class="form-label fw-semibold"></label>
+                        <input asp-for="Product.Category" class="form-control" />
+                        <span asp-validation-for="Product.Category" class="text-danger small"></span>
                     </div>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Product.Description" class="form-label">Descriere</label>
-                    <textarea asp-for="Product.Description" class="form-control" rows="4"></textarea>
-                    <span asp-validation-for="Product.Description" class="text-danger"></span>
-                </div>
-
-                <div class="card mb-4 bg-light">
-                    <div class="card-body">
-                        <h5 class="card-title">Imagine</h5>
-
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="me-3">
-                                <label class="form-label fw-bold">Imagine actuală:</label><br />
-                                <img src="/images/produse/@(string.IsNullOrEmpty(Model.Product.Imagine) ? "default.jpg" : Model.Product.Imagine)"
-                                     onerror="this.src='/images/produse/default.jpg'"
-                                     style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px; border: 1px solid #ccc;" />
-                            </div>
-                            <div class="flex-grow-1">
-                                <label asp-for="ImagineFisier" class="form-label">Încarcă o imagine nouă (Opțional)</label>
-                                <input type="file" asp-for="ImagineFisier" class="form-control" accept="image/*" />
-                                <span asp-validation-for="ImagineFisier" class="text-danger"></span>
-                                <div class="form-text text-muted">Lasă gol dacă vrei să păstrezi imaginea actuală.</div>
-                            </div>
+                    <div class="col-md-6">
+                        <label asp-for="Product.Price" class="form-label fw-semibold">Preț (RON)</label>
+                        <input asp-for="Product.Price" class="form-control" type="number" step="0.01" min="0" max="500" />
+                        <span asp-validation-for="Product.Price" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Product.Quantity" class="form-label fw-semibold">Stoc</label>
+                        <input asp-for="Product.Quantity" class="form-control" type="number" min="0" />
+                        <span asp-validation-for="Product.Quantity" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Product.Description" class="form-label fw-semibold"></label>
+                        <textarea asp-for="Product.Description" class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Imagine</label>
+                        <div class="d-flex align-items-center gap-3 flex-wrap">
+                            <img src="@ProductImages.GetUrl(Model.Product)"
+                                 class="ec-admin-thumb" alt="" />
+                            <input type="file" asp-for="ImagineFisier" class="form-control" accept="image/*" />
                         </div>
                     </div>
                 </div>
 
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-save"></i> Salvează Modificările
-                    </button>
-                    <a asp-page="Index" class="btn btn-secondary">Anulează</a>
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-ec-primary">Salvează</button>
+                    <a asp-page="Index" class="btn btn-outline-secondary">Anulează</a>
                 </div>
             </form>
         </div>
@@ -84,7 +61,5 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
 }

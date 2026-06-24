@@ -26,6 +26,10 @@ namespace ProiectWeb.Data
                 .Property(p => p.Price)
                 .HasConversion<double>();
 
+            modelBuilder.Entity<Product>()
+                .Property(p => p.AcquisitionCost)
+                .HasConversion<double>();
+
             // Configurare Relație Favorite
             modelBuilder.Entity<Favorite>()
                 .HasOne(f => f.Product)

@@ -5,8 +5,9 @@
 }
 
 <div class="container mt-5">
-    <div class="d-flex align-items-center mb-4">
-        <h2 class="fw-bold"><i class="bi bi-heart-fill text-danger me-2"></i> Favoritele mele</h2>
+    <div class="ec-page-header mb-4">
+        <h1>Favoritele mele</h1>
+        <p class="text-muted mb-0">Produsele pe care le-ai marcat.</p>
     </div>
 
     @* Container pentru mesaje de confirmare *@
@@ -14,12 +15,9 @@
 
     @if (Model.FavoriteProducts == null || !Model.FavoriteProducts.Any())
     {
-        <div class="alert alert-info shadow-sm d-flex align-items-center">
-            <i class="bi bi-info-circle fs-4 me-3"></i>
-            <div>
-                Nu ai adăugat încă niciun produs la favorite.
-                <a asp-page="/Client/Products/Index" class="alert-link ms-1">Explorează catalogul</a>.
-            </div>
+        <div class="alert alert-info shadow-sm">
+            Nu ai adăugat încă niciun produs la favorite.
+            <a asp-page="/Client/Products/Index" class="alert-link ms-1">Explorează catalogul</a>.
         </div>
     }
     else
@@ -32,12 +30,11 @@
                     <div class="card h-100 border-0 shadow-sm position-relative product-card">
 
                         @* Inimioara roșie pentru eliminare rapidă *@
-                        <button class="fav-btn active-fav" data-id="@product.Id" title="Elimină de la favorite">
-                            <i class="bi bi-heart-fill text-danger"></i>
+                        <button class="fav-btn active-fav is-favorite" data-id="@product.Id" title="Elimină de la favorite">
+                            Salvat
                         </button>
 
-                        <img src="/Imagini/@(string.IsNullOrEmpty(product.Imagine) ? "default.jpg" : product.Imagine)"
-                             onerror="this.onerror=null; this.src='/Imagini/default.jpg';"
+                        <img src="@ProductImages.GetUrl(product)"
                              class="card-img-top product-image"
                              alt="@product.Name"
                              data-id="@product.Id"
@@ -63,8 +60,8 @@
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-body d-flex flex-column flex-md-row p-0" style="min-height: 450px;">
 
-                <div id="recommendationsSection" class="p-3 bg-light border-end" style="width: 35%; overflow-y: auto; max-height: 550px;">
-                    <h6 class="text-dark border-bottom pb-2 mb-3 fw-bold"><i class="bi bi-stars"></i> Recomandări</h6>
+                <div id="recommendationsSection" class="p-3 bg-light border-end ec-modal-recommendations">
+                    <h6 class="text-dark border-bottom pb-2 mb-3 fw-bold">Recomandări</h6>
                     <div id="recommendationsList"></div>
                 </div>
 
@@ -85,8 +82,8 @@
                     <form id="addToCartForm" class="w-100 px-4">
                         <input type="hidden" id="productIdInput" name="id" value="" />
                         <input type="hidden" id="productQtyInput" name="quantity" value="1" />
-                        <button type="button" id="modalAddToCartBtn" class="btn btn-primary w-100 py-2 rounded-pill shadow-sm">
-                            <i class="bi bi-cart-plus"></i> Adaugă în coș
+                        <button type="button" id="modalAddToCartBtn" class="btn btn-ec-primary w-100 py-2">
+                            Adaugă în coș
                         </button>
                         @Html.AntiForgeryToken()
                     </form>
@@ -98,6 +95,7 @@
 
 @section Scripts {
     <script>
+        const IMG_NOT_FOUND = '@ProductImages.GetUrlFromFileName(ProductImageService.NotFoundFileName)';
         // Funcția de afișare mesaje (folosită din Index)
         function showMessage(msg) {
             const container = document.getElementById('messageContainer');
@@ -133,7 +131,7 @@
             // FORȚĂM imaginea să se actualizeze
             const modalImg = document.getElementById('modalImage');
             modalImg.src = imgSrc;
-            modalImg.onerror = function() { this.src = '/Imagini/default.jpg'; };
+            modalImg.onerror = function() { this.src = IMG_NOT_FOUND; };
 
             document.getElementById('productIdInput').value = id;
             document.getElementById('quantityInput').value = 1;
@@ -158,30 +156,29 @@
                     }
 
                     data.forEach(p => {
-                        // Sincronizăm proprietățile (fix pentru imaginea lipsă)
-                        const imgFile = p.imagine || p.Imagine || 'default.jpg';
+                        const imgSrc = p.imageUrl || p.ImageUrl || IMG_NOT_FOUND;
                         const pName = p.name || p.Name;
                         const pPrice = p.price || p.Price;
-                        const pDesc = (p.description || p.Description || "").replace(/'/g, "\\'");
+                        const pDesc = p.description || p.Description || '';
                         const pId = p.id || p.Id;
 
-                        // Generăm cardul IDENTIC cu cel din Catalog (image_7a1d43.png)
                         const recCard = document.createElement('div');
-                        recCard.className = 'card mb-3 border-0 shadow-sm recommendation-card';
+                        recCard.className = 'card mb-2 border-0 shadow-sm recommendation-card';
                         recCard.style.cursor = 'pointer';
                         recCard.style.overflow = 'hidden';
 
                         recCard.innerHTML = `
-                            <div onclick="updateModalContent('${pId}', '${pName.replace(/'/g, "\\'")}', '${pPrice}', '${pDesc}', '/Imagini/${imgFile}')">
-                                <img src="/Imagini/${imgFile}"
-                                     style="height:70px; object-fit:cover; width:100%;"
-                                     onerror="this.src='/Imagini/default.jpg'">
-                                <div class="p-2 text-center">
-                                    <div class="small fw-bold text-truncate">${pName}</div>
-                                    <div class="small text-success">${parseFloat(pPrice).toFixed(2)} RON</div>
-                                </div>
+                            <img src="${imgSrc}" style="height:70px; object-fit:cover; width:100%;"
+                                 onerror="this.src='${IMG_NOT_FOUND}'">
+                            <div class="p-2 text-center">
+                                <div class="small fw-bold text-truncate"></div>
+                                <div class="small text-success"></div>
                             </div>`;
-
+                        recCard.querySelector('.fw-bold').textContent = pName;
+                        recCard.querySelector('.text-success').textContent = parseFloat(pPrice).toFixed(2) + ' RON';
+                        recCard.addEventListener('click', () => {
+                            updateModalContent(pId, pName, pPrice, pDesc, imgSrc);
+                        });
                         recList.appendChild(recCard);
                     });
                 });

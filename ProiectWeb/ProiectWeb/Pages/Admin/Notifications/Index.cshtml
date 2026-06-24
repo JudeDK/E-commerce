@@ -1,32 +1,74 @@
 ﻿@page
 @model ProiectWeb.Pages.Admin.Notifications.IndexModel
 @{
-    ViewData["Title"] = "Notifications";
+    ViewData["Title"] = "Notificări — Admin";
+
+    string PageUrl(int page) => Url.Page(null, new { pageNumber = page }) ?? "#";
 }
 
-<h2>Notifications</h2>
+<div class="ec-admin-header d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">Notificări</h2>
+        <p class="text-muted small mb-0">
+            @Model.TotalNotifications notificări în total
+            @if (Model.TotalPages > 1)
+            {
+                <span> — pagina @Model.PageNumber din @Model.TotalPages</span>
+            }
+        </p>
+    </div>
+</div>
 
 @if (Model.Notifications == null || !Model.Notifications.Any())
 {
-    <div class="alert alert-info">No notifications found.</div>
+    <div class="ec-admin-card text-center py-5 text-muted">
+        Nu există notificări.
+    </div>
 }
 else
 {
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Message</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var notification in Model.Notifications)
-            {
+    <div class="ec-admin-table-wrap">
+        <table class="table ec-admin-table align-middle mb-0">
+            <thead>
                 <tr>
-                    <td>@notification.DateCreated.ToString("g")</td>
-                    <td>@notification.Message</td>
+                    <th style="width: 180px;">Data</th>
+                    <th>Mesaj</th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var notification in Model.Notifications)
+                {
+                    <tr>
+                        <td class="text-nowrap text-muted small">@notification.DateCreated.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@notification.Message</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Paginare notificări" class="mt-4">
+            <ul class="pagination justify-content-center ec-admin-pagination mb-0">
+                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@PageUrl(Model.PageNumber - 1)">&laquo;</a>
+                </li>
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                }
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" href="@PageUrl(i)">@i</a>
+                    </li>
+                }
+                <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="@PageUrl(Model.PageNumber + 1)">&raquo;</a>
+                </li>
+            </ul>
+        </nav>
+    }
 }

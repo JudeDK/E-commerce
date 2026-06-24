@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using ProiectWeb.Data;
 using ProiectWeb.Models;
+using ProiectWeb.Services;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -12,10 +13,12 @@ namespace ProiectWeb.Pages.Admin.Products
     public class DeleteModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly ProductImageService _images;
 
-        public DeleteModel(ApplicationDbContext context)
+        public DeleteModel(ApplicationDbContext context, ProductImageService images)
         {
             _context = context;
+            _images = images;
         }
 
         [BindProperty]
@@ -42,32 +45,24 @@ namespace ProiectWeb.Pages.Admin.Products
                 return NotFound();
             }
 
-            // 1. Ștergem și imaginea de pe disc (Opțional, dar recomandat)
-            if (!string.IsNullOrEmpty(product.Imagine) && product.Imagine != "default.jpg")
+            if (!string.IsNullOrEmpty(product.Imagine)
+                && product.Imagine != ProductImageService.NotFoundFileName
+                && _images.FileExists(product.Imagine))
             {
-                var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/produse", product.Imagine);
+                var filePath = Path.Combine(_images.ImaginiDirectory, product.Imagine);
                 if (System.IO.File.Exists(filePath))
                 {
-                    try
-                    {
-                        System.IO.File.Delete(filePath);
-                    }
-                    catch
-                    {
-                        // Ignorăm eroarea dacă fișierul e blocat, continuăm ștergerea din DB
-                    }
+                    try { System.IO.File.Delete(filePath); }
+                    catch { /* Ignorăm eroarea dacă fișierul e blocat */ }
                 }
             }
 
-            // 2. Ștergem din baza de date
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
 
-            // 3. Adăugăm notificare
             _context.Notifications.Add(new Notification
             {
                 Message = $"Produsul '{product.Name}' a fost șters."
-                // Date = DateTime.UtcNow // Decomentează dacă ai câmp de dată
             });
             await _context.SaveChangesAsync();
 

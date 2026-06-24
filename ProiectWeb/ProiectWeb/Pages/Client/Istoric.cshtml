@@ -5,7 +5,16 @@
 }
 
 <div class="container py-5">
-    <h2 class="mb-4"><i class="bi bi-clock-history"></i> Istoricul Comenzilor Tale</h2>
+    <div class="ec-page-header mb-4">
+        <h1>Istoric comenzi</h1>
+        <p class="text-muted mb-0">
+            Comenzile plasate pe contul tău.
+            @if (Model.TotalOrders > 0 && Model.TotalPages > 1)
+            {
+                <span> — pagina @Model.PageNumber din @Model.TotalPages</span>
+            }
+        </p>
+    </div>
 
     @if (Model.Orders != null && Model.Orders.Any())
     {
@@ -24,9 +33,9 @@
                         <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
                             <div class="d-flex w-100 justify-content-between align-items-center pe-3 flex-wrap">
                                 <div>
-                                    <strong>Comanda #@order.Id</strong>
+                                    <strong>Comanda #@(Model.OrderDisplayNumbers.GetValueOrDefault(order.Id, order.Id))</strong>
                                     <span class="text-muted ms-2 small">
-                                        <i class="bi bi-calendar"></i> @order.OrderDate.ToString("dd MMM yyyy, HH:mm")
+                                        @order.OrderDate.ToString("dd MMM yyyy, HH:mm")
                                     </span>
                                 </div>
                                 <div class="d-flex align-items-center">
@@ -55,13 +64,12 @@
                                             // Verificăm dacă produsul mai există (nu e null)
                                             var price = item.Product?.Price ?? 0;
                                             var rowTotal = item.Quantity * price;
-                                            var imgName = string.IsNullOrEmpty(item.Product?.Imagine) ? "default.jpg" : item.Product.Imagine;
+                                            var imgUrl = ProductImages.GetUrl(item.Product);
 
                                             <tr>
                                                 <td>
                                                     <div class="d-flex align-items-center">
-                                                        <img src="/Imagini/@imgName"
-                                                             onerror="this.src='/Imagini/default.jpg'"
+                                                        <img src="@imgUrl"
                                                              style="width: 40px; height: 40px; object-fit: cover; border-radius:4px;" class="me-2 border">
                                                         <span>@(item.Product?.Name ?? "Produs indisponibil")</span>
                                                     </div>
@@ -85,18 +93,38 @@
                 </div>
             }
         </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Paginare comenzi" class="mt-4">
+                <ul class="pagination justify-content-center ec-admin-pagination mb-0">
+                    <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                        <a class="page-link" href="@(Url.Page(null, new { pageNumber = Model.PageNumber - 1 }) ?? "#")">&laquo;</a>
+                    </li>
+                    @{
+                        int startPage = Math.Max(1, Model.PageNumber - 2);
+                        int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                        if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                    }
+                    @for (int i = startPage; i <= endPage; i++)
+                    {
+                        <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                            <a class="page-link" href="@(Url.Page(null, new { pageNumber = i }) ?? "#")">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" href="@(Url.Page(null, new { pageNumber = Model.PageNumber + 1 }) ?? "#")">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        }
     }
     else
     {
         <div class="text-center py-5">
-            <div class="mb-3">
-                <i class="bi bi-cart-x display-1 text-muted"></i>
-            </div>
-            <h3 class="mt-3">Nu ai plasat nicio comandă încă.</h3>
-            <p class="text-muted">Te invităm să explorezi catalogul nostru de produse.</p>
-            <a href="/Client/Products" class="btn btn-primary mt-2 px-4 py-2 rounded-pill">
-                Mergi la Magazin
-            </a>
+            <h3 class="mt-0">Nu ai plasat nicio comandă încă.</h3>
+            <p class="text-muted">Explorează catalogul pentru a plasa prima comandă.</p>
+            <a href="/Client/Products" class="btn btn-ec-primary mt-2">Mergi la magazin</a>
         </div>
     }
 </div>

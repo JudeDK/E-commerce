@@ -2,84 +2,6 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 
-<style>
-    .connect-btn {
-        background: #009e60;  /* verde Glovo */
-        color: white !important;
-        font-weight: 600;
-        padding: 7px 18px;
-        border-radius: 25px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        border: none;
-        text-decoration: none;
-        transition: background 0.2s ease-in-out;
-    }
-
-    .connect-btn i {
-        font-size: 18px;
-    }
-
-    .connect-btn:hover {
-        background: #007c4d;
-        color: white !important;
-    }
-
-    /* ---------- PROFIL DROPDOWN (user logat) ---------- */
-
-    .profile-btn {
-        background: #f4f4f4;
-        border-radius: 50%;
-        width: 42px;
-        height: 42px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-weight: 700;
-        cursor: pointer;
-        transition: 0.2s;
-        border: 2px solid #ddd;
-    }
-
-    .profile-btn:hover {
-        background: #e5e5e5;
-    }
-
-    .profile-dropdown {
-        position: absolute;
-        top: 60px;
-        right: 10px;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        padding: 10px 0;
-        width: 260px;
-        display: none;
-        animation: fadeInAnim 0.2s ease-in-out;
-        z-index: 2000;
-    }
-
-    .profile-item {
-        padding: 14px 20px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 15px;
-        cursor: pointer;
-        transition: 0.2s;
-    }
-
-    .profile-item:hover {
-        background: #f3f3f3;
-    }
-
-    @@keyframes fadeInAnim {
-        from { opacity: 0; transform: translateY(-5px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-</style>
-
 <ul class="navbar-nav">
 @{
     ApplicationUser? user = null;
@@ -90,41 +12,36 @@
 
 @if (user != null)
 {
-    <!-- ---------- USER LOGAT (Buton inițial + dropdown) ---------- -->
     var initial = user.Nickname?.FirstOrDefault().ToString().ToUpper() ?? "?";
 
     <li class="nav-item position-relative">
-
         <div class="profile-btn" id="profileBtn">@initial</div>
 
         <div class="profile-dropdown" id="profileMenu">
-
-            <div class="profile-item">
-                <i class="bi bi-person-circle"></i>
+            <div class="profile-item profile-item-name">
                 <strong>@user.Nickname</strong>
             </div>
 
             <a class="profile-item" asp-area="Identity" asp-page="/Account/Manage/Index">
-                <i class="bi bi-gear"></i> Profil
+                Profil
             </a>
-           @if (SignInManager.IsSignedIn(User) && !User.IsInRole("Admin")) 
-{
+
+            @if (SignInManager.IsSignedIn(User) && !User.IsInRole("Admin"))
+            {
                 <a class="profile-item" asp-page="/Client/Istoric">
-                    <i class="bi bi-clock-history"></i> Istoric Comenzi
+                    Istoric comenzi
                 </a>
 
                 <a class="profile-item" asp-page="/Client/Statistici/Statistici">
-                    <i class="bi bi-bar-chart-line"></i> Statistici Cheltuieli
+                    Statistici cheltuieli
                 </a>
-}       
-  
+            }
 
             <form asp-area="Identity" asp-page="/Account/Logout" method="post">
-                <button class="profile-item w-100 text-start" style="border:none;background:none;">
-                    <i class="bi bi-box-arrow-right"></i> Logout
+                <button class="profile-item w-100 text-start" type="submit" style="border:none;background:none;">
+                    Deconectare
                 </button>
             </form>
-
         </div>
     </li>
 
@@ -145,10 +62,9 @@
 }
 else
 {
-    <!-- ---------- USER NELGAT (Buton Conectare) ---------- -->
     <li class="nav-item ms-3">
         <a class="connect-btn" asp-area="Identity" asp-page="/Account/Login">
-            <i class="bi bi-person"></i> Conectare
+            Conectare
         </a>
     </li>
 }

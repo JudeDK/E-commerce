@@ -56,8 +56,9 @@ namespace ProiectWeb.Areas.Identity.Pages.Account.Manage
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Phone]
-            [Display(Name = "Phone number")]
+            [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "Numărul de telefon trebuie să aibă exact 10 cifre (ex: 0712345678).")]
+            [StringLength(10, MinimumLength = 10, ErrorMessage = "Numărul de telefon trebuie să aibă exact 10 cifre.")]
+            [Display(Name = "Număr de telefon")]
             public string PhoneNumber { get; set; }
         }
 
@@ -96,6 +97,20 @@ namespace ProiectWeb.Areas.Identity.Pages.Account.Manage
 
             if (!ModelState.IsValid)
             {
+                await LoadAsync(user);
+                return Page();
+            }
+
+            if (!string.IsNullOrEmpty(Input.PhoneNumber) && Input.PhoneNumber.Length != 10)
+            {
+                ModelState.AddModelError("Input.PhoneNumber", "Numărul de telefon trebuie să aibă exact 10 cifre.");
+                await LoadAsync(user);
+                return Page();
+            }
+
+            if (Input.PhoneNumber != null && Input.PhoneNumber.Any(c => !char.IsDigit(c)))
+            {
+                ModelState.AddModelError("Input.PhoneNumber", "Numărul de telefon poate conține doar cifre.");
                 await LoadAsync(user);
                 return Page();
             }

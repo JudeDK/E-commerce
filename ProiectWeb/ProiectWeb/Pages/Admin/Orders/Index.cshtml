@@ -1,58 +1,128 @@
 ﻿@page
 @model ProiectWeb.Pages.Admin.Orders.IndexModel
 @{
-    ViewData["Title"] = "Comenzi - Admin";
+    ViewData["Title"] = "Comenzi — Admin";
+
+    string SortUrl(string sort) => Url.Page(null, new { sort, pageNumber = 1 }) ?? "#";
+    string PageUrl(int page) => Url.Page(null, new { sort = Model.Sort, pageNumber = page }) ?? "#";
+
+    var sortOptions = new (string Key, string Label)[]
+    {
+        ("newest", "Cele mai noi"),
+        ("oldest", "Cele mai vechi"),
+        ("largest", "Cele mai mari"),
+        ("smallest", "Cele mai mici")
+    };
 }
 
-<h2 class="mb-4">Panou Comenzi</h2>
+<div class="ec-admin-header d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h2 class="mb-1">Comenzi</h2>
+        <p class="text-muted small mb-0">
+            @Model.TotalOrders comenzi în total
+            @if (Model.TotalPages > 1)
+            {
+                <span> — pagina @Model.PageNumber din @Model.TotalPages</span>
+            }
+        </p>
+    </div>
+</div>
+
+<div class="ec-sort-bar mb-4" role="group" aria-label="Ordonare comenzi">
+    @foreach (var opt in sortOptions)
+    {
+        var isActive = string.Equals(Model.Sort, opt.Key, StringComparison.OrdinalIgnoreCase);
+        <a href="@SortUrl(opt.Key)"
+           class="ec-sort-btn @(isActive ? "active" : "")"
+           aria-current="@(isActive ? "true" : null)">
+            @opt.Label
+        </a>
+    }
+</div>
 
 @if (Model.Orders.Any())
 {
-    <div class="accordion" id="ordersAccordion">
+    <div class="accordion ec-orders-accordion" id="ordersAccordion">
         @foreach (var order in Model.Orders)
         {
             var collapseId = "collapse" + order.Id;
             var headingId = "heading" + order.Id;
-            <div class="accordion-item mb-2">
+            var orderTotal = Model.GetOrderTotal(order.Id);
+
+            <div class="accordion-item mb-2 border">
                 <h2 class="accordion-header" id="@headingId">
                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#@collapseId" aria-expanded="false" aria-controls="@collapseId">
-                        <strong>Comandă #@order.Id</strong> — @order.User.Nickname (@order.User.Email) — @order.OrderDate.ToString("dd.MM.yyyy HH:mm")
+                        <span class="d-flex w-100 justify-content-between align-items-center pe-3 flex-wrap gap-2">
+                            <span>
+                                <strong>Comandă #@(Model.GlobalOrderNumbers.GetValueOrDefault(order.Id, order.Id))</strong>
+                                <span class="text-muted ms-2 small">@order.User?.Nickname — @order.OrderDate.ToString("dd.MM.yyyy HH:mm")</span>
+                            </span>
+                            <span class="fw-semibold">@orderTotal.ToString("0.00") RON</span>
+                        </span>
                     </button>
                 </h2>
-                <div id="@collapseId" class="collapse">
+                <div id="@collapseId" class="accordion-collapse collapse" data-bs-parent="#ordersAccordion">
                     <div class="accordion-body">
-                        <table class="table table-bordered table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Produs</th>
-                                    <th>Preț</th>
-                                    <th>Cantitate</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in order.Items)
-                                {
+                        <p class="small text-muted mb-3">@order.User?.Email</p>
+                        <div class="table-responsive">
+                            <table class="table ec-admin-table align-middle mb-3">
+                                <thead>
                                     <tr>
-                                        <td>@item.Product.Name</td>
-                                        <td>@item.Product.Price RON</td>
-                                        <td>@item.Quantity</td>
-                                        <td>@(item.Product.Price* item.Quantity) RON</td>
+                                        <th>Produs</th>
+                                        <th>Preț</th>
+                                        <th>Cantitate</th>
+                                        <th class="text-end">Total</th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
-
-                        <p class="fw-bold">
-                            Total comandă: @order.Items.Sum(i => i.Product.Price * i.Quantity) RON
-                        </p>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in order.Items)
+                                    {
+                                        var price = item.Product?.Price ?? 0;
+                                        <tr>
+                                            <td>@(item.Product?.Name ?? "Produs indisponibil")</td>
+                                            <td>@price.ToString("0.00") RON</td>
+                                            <td>@item.Quantity</td>
+                                            <td class="text-end fw-semibold">@((price * item.Quantity).ToString("0.00")) RON</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="fw-bold mb-0 text-end">Total comandă: @orderTotal.ToString("0.00") RON</p>
                     </div>
                 </div>
             </div>
         }
     </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Paginare comenzi" class="mt-4">
+            <ul class="pagination justify-content-center ec-admin-pagination mb-0">
+                <li class="page-item @(Model.PageNumber == 1 ? "disabled" : "")">
+                    <a class="page-link" href="@PageUrl(Model.PageNumber - 1)">&laquo;</a>
+                </li>
+                @{
+                    int startPage = Math.Max(1, Model.PageNumber - 2);
+                    int endPage = Math.Min(Model.TotalPages, startPage + 4);
+                    if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                }
+                @for (int i = startPage; i <= endPage; i++)
+                {
+                    <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                        <a class="page-link" href="@PageUrl(i)">@i</a>
+                    </li>
+                }
+                <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" href="@PageUrl(Model.PageNumber + 1)">&raquo;</a>
+                </li>
+            </ul>
+        </nav>
+    }
 }
 else
 {
-    <div class="alert alert-info">Nu există comenzi înregistrate.</div>
+    <div class="ec-admin-card text-center py-5 text-muted">
+        Nu există comenzi înregistrate.
+    </div>
 }

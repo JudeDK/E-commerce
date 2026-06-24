@@ -5,14 +5,15 @@ using ProiectWeb.Data;
 using ProiectWeb.Models;
 using Stripe;
 using Stripe.Checkout;
-using Microsoft.AspNetCore.Identity.UI.Services; // Adăugat pentru IEmailSender
+using ProiectWeb.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace ProiectWeb.Pages.Client.Cart
 {
     public class OrderSuccessModel : PageModel
     {
         private readonly ApplicationDbContext _context;
-        private readonly IEmailSender _emailSender; // Injectăm serviciul tău existent
+        private readonly IEmailSender _emailSender;
         private const string StripeSecretKey = "sk_test_51SjaGrERe0IKlAF8yNROdPGl8ZahcC68jdwQ9rAIN4whsFItnQeVRThJs2Gx3sCHXutE398CiRgJaIsP8Hm64WqM00eCET99t1";
 
         public OrderSuccessModel(ApplicationDbContext context, IEmailSender emailSender)
@@ -49,8 +50,15 @@ namespace ProiectWeb.Pages.Client.Cart
                             var product = await _context.Products.FindAsync(item.ProductId);
                             if (product != null)
                             {
+                                var qtyBefore = product.Quantity;
                                 product.Quantity -= item.Quantity;
                                 if (product.Quantity < 0) product.Quantity = 0;
+
+                                _context.Notifications.Add(new Notification
+                                {
+                                    Message = $"Stoc scăzut: «{product.Name}» {qtyBefore} → {product.Quantity} buc. (comandă #{order.Id}).",
+                                    DateCreated = DateTime.UtcNow,
+                                });
                             }
                         }
 
@@ -84,11 +92,14 @@ namespace ProiectWeb.Pages.Client.Cart
             string tabelProduse = "";
             foreach (var item in order.Items)
             {
+                if (item.Product == null) continue;
+                var unit = item.Product.Price;
+                var lineTotal = item.Quantity * unit;
                 tabelProduse += $@"
                     <tr>
-                        <td style='padding:10px; border-bottom:1px solid #eee;'>{item.Product.Name}</td>
-                        <td style='padding:10px; border-bottom:1px solid #eee; text-align:center;'>{item.Quantity}</td>
-                        <td style='padding:10px; border-bottom:1px solid #eee; text-align:right;'>{item.Product.Price} RON</td>
+                        <td style='padding:10px; border-bottom:1px solid #eee;'>{item.Quantity} x {item.Product.Name}</td>
+                        <td style='padding:10px; border-bottom:1px solid #eee; text-align:right;'>Preț Unitar: {unit:0.00} RON</td>
+                        <td style='padding:10px; border-bottom:1px solid #eee; text-align:right;'>Total linie: {lineTotal:0.00} RON</td>
                     </tr>";
             }
 
@@ -102,8 +113,8 @@ namespace ProiectWeb.Pages.Client.Cart
                         <thead>
                             <tr style='background-color: #f9f9f9;'>
                                 <th style='padding:10px; text-align:left;'>Produs</th>
-                                <th style='padding:10px; text-align:center;'>Cant.</th>
-                                <th style='padding:10px; text-align:right;'>Preț</th>
+                                <th style='padding:10px; text-align:right;'>Preț unitar</th>
+                                <th style='padding:10px; text-align:right;'>Total linie</th>
                             </tr>
                         </thead>
                         <tbody>

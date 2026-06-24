@@ -1,0 +1,1400 @@
+================================================================================
+RAPORT MODIFICARI — Proiect E-commerce
+Ultima actualizare: 4 iunie 2026 (Pași 18–26)
+================================================================================
+
+Acest document descrie TOATE schimbarile efectuate in proiect: backend/AI,
+refacere frontend, pagini principale, integrare .NET, recomandari, catalog,
+Business Intelligence admin, suport client si ajustari tehnice.
+
+CUPRINS PASI:
+  1  — Model AI (Prophet + FastAPI)
+  2  — Conexiune .NET <-> server AI
+  3  — Refacere frontend (design system)
+  4  — Pagini principale si copywriting
+  5  — Navbar pe roluri
+  6  — Formular contact + email
+  7  — Cos in navbar (stil)
+  8  — Slider pret (noUiSlider)
+  9  — Eliminare retur / fix suport tehnic
+  10 — Corectii build (static web assets)
+  11 — Filtre magazin, modal, recomandari, seed catalog (istoric)
+  12 — Fara reseed produse, comenzi test, 3 recomandari cross-categorie
+  13 — Slider pret dinamic (interval din catalog)
+  14 — Curatare cod seed / generare date test
+  15 — Panou Business Intelligence admin (chat lateral)
+  16 — Comenzi admin in .NET + Prophet pentru cantitate
+  17 — Suport client (chat flotant) si mediu Python stabil
+  18 — UI pagini publice + admin produse modern
+  19 — Autentificare, profil, telefon, parolă
+  20 — Căutare diacritice, stoc coș, email plată
+  21 — Reset comenzi, prețuri, numerotare comenzi
+  22 — Chatbot: fallback client + admin read-only
+  23 — Notificări extinse + AI prescriptiv (stagnant/favorite)
+  24 — Arhivă cod seed produse/comenzi (eliminat din proiect)
+  25 — UI retail editorial, copy magazin, butoane, paginare comenzi/notificări, fix sortare magazin
+  26 — Imagini produse (folder Imagini, ProductImageService, potrivire nume fără ghilimele)
+  27 — Documentatie licenta: cap. 2 extins (stil Tudor Chițu) + citari [1]-[24] + cap. 1.2 cu surse
+
+Documentatie licenta (structura Tudor Chițu + poze pas cu pas):
+  **Licenta_E-commerce_SABLON.md** — text cap. 1–5, bibliografie, PREGATIRE, GHID TABELE, GHID POZE (31 pasi)
+  **Licenta_Tudor_Chitu.pdf** — model structura (NU modifica)
+  Sectiunea „GHID POZE LICENTA” din acest fisier — checklist rapid
+
+
+================================================================================
+FUNCTIONALITATI PRINCIPALE (STARE CURENTA)
+================================================================================
+
+MAGAZIN (Client):
+- Listare produse cu filtre: categorie, pret (slider dinamic din DB), cautare.
+- Sortare: nume A-Z / Z-A, pret crescator / descrescator (butoane .btn-sort, activ vizual).
+- Paginare: 15 produse/pagina; filtrele de pret sunt aceleasi la incarcare initiala si la AJAX.
+- Imagini produse: folder ProiectWeb/Imagini, URL /Imagini/, fallback Imagine negasita.jpg;
+  potrivire nume fara caractere interzise Windows (ex. produs cu " -> fisier fara ").
+- La schimbarea sortarii → revenire automata la pagina 1.
+- Modal produs: detalii, adaugare in cos, 3 recomandari (cross-categorie).
+- Favorite (buton text Salveaza/Salvat), cos (sesiune + Stripe), statistici client.
+- Istoric comenzi: paginare 10 comenzi/pagina, numerotare #1, #2… per utilizator.
+- Chat suport tehnic (dreapta-jos): raspunsuri Groq + context sesiune/cos.
+
+ADMIN:
+- CRUD produse, comenzi, notificari, top favorite.
+- Comenzi: paginare 10/pagina + sortare (cele mai noi/vechi, cele mai mari/mici ca valoare).
+- Notificari: paginare 10/pagina, tabel .ec-admin-table.
+- Panou „Analiză stoc” (dreapta): butoane rapide + chat.
+  * Stoc Critic      -> lista produse cu stoc <= 15 buc. (din PostgreSQL)
+  * Stagnant (30 zile) -> top 10 fara vanzari recente / „fara vanzari”
+  * Favorite         -> top 5 produse salvate
+  * Comenzi AI       -> propunere reaprovizionare + cantitate Prophet
+  * Confirmare comanda -> POST /api/chat/execute-order (stoc + email furnizor)
+
+AI / PROPHET:
+- stock_prediction.py: ROP, stoc tinta, cantitate optima, stoc critic <= 15.
+- Comenzi AI: mesaj simplu in chat; cantitatea la butonul Confirmă.
+- Daca Python ruleaza (port 8001): cantitate din Prophet.
+- Daca Python nu ruleaza: fallback .NET (aceeasi formula, fara model ML).
+
+RECOMANDARI:
+- RecommendationService + hybrid_model.json (Antrenare/model.py din comenzi reale).
+
+
+================================================================================
+PASUL 1 — VERIFICARE MODEL AI (Backend / Integrare)
+================================================================================
+
+CE S-A FACUT:
+- Validat si imbunatat fisierul stock_prediction.py (model Meta Prophet).
+- Integrat in fluxul admin_propunere_comenzi din ai_server.py.
+- Normalizare istoric_vanzari (.NET snake_case / PascalCase).
+- find_best_order_proposal() — alege produsul cu cea mai mare urgenta.
+- Prag stoc critic CRITICAL_STOCK_LEVEL = 15 (reaprovizionare obligatorie).
+- Endpoint GET /health (verificare server AI).
+- GROQ_API_KEY din .env pentru chat liber / suport client.
+
+FISIERE:
+- LangChain/stock_prediction.py
+- LangChain/ai_server.py
+- LangChain/requirements.txt
+- LangChain/.env.example
+- LangChain/start_ai_server.bat
+
+TEHNOLOGII: Python 3, FastAPI, Uvicorn, Prophet, LangChain + Groq, python-dotenv
+
+NOTA requirements.txt (stabilitate Windows/Prophet):
+- numpy>=1.24,<2
+- matplotlib>=3.7,<3.9
+- start_ai_server.bat: venv + PYTHONNOUSERSITE=1
+- ai_server.py: reload=False (evita crash copil proces pe Windows)
+
+
+================================================================================
+PASUL 2 — CONEXIUNE .NET <-> SERVER AI
+================================================================================
+
+CE S-A FACUT:
+- POST /api/chat — proxy catre Python pentru mesaje libere admin/client.
+- POST /api/chat/execute-order — actualizare stoc + email furnizor (doar Admin).
+- appsettings.json -> AiServer:BaseUrl (implicit http://127.0.0.1:8001).
+
+EVOLUTIE (pasul 16):
+- Comenzile rapide admin_* (stoc critic, stagnant, favorite, propunere comenzi)
+  sunt procesate DIRECT in Chatbox.cs din PostgreSQL.
+- Python este folosit optional doar pentru calculul cantitatii Prophet la Comenzi AI.
+
+FISIERE: API/Chatbox.cs, appsettings.json, Program.cs
+
+
+================================================================================
+PASUL 3 — REFACERE COMPLETA FRONTEND (UI/UX)
+================================================================================
+
+CE S-A FACUT:
+- Design „E-commerce” — paleta Navy / Coral / Mint / Cream.
+- Font Plus Jakarta Sans, navbar sticky, footer, carduri produse unificate.
+- site.css rescris; sters wwwroot/css/chatbox.css (conflict build).
+
+FISIERE: wwwroot/css/site.css, _Layout.cshtml, Index/About/Contact/Products/Cart
+
+
+================================================================================
+PASUL 4 — PAGINI PRINCIPALE SI COPYWRITING
+================================================================================
+
+- Homepage: hero, CTA, sectiuni brand (fara Livrare/Retur).
+- About, Contact, Magazin (filtre), Cos (Stripe).
+
+
+================================================================================
+PASUL 5 — NAVBAR PE ROLURI
+================================================================================
+
+- Vizitator: Acasa, Despre, Magazin (login), Contact.
+- Admin: Produse, Notificari, Comenzi, Top Favorite + dock „ASISTENT ANALIZĂ”.
+- Client: Acasa, Despre, Magazin, Cos, Favorite, Contact.
+- Suport tehnic: buton flotant chat (nu in navbar).
+
+
+================================================================================
+PASUL 6 — FORMULAR CONTACT SI TRIMITERE EMAIL
+================================================================================
+
+- Destinatie: raresmarian3344@gmail.com
+- Validare server + client (nume, email regex, mesaj 10–2000 caractere).
+
+
+================================================================================
+PASUL 7 — COS IN NAVBAR (STIL)
+================================================================================
+
+- Eliminat .ec-nav-cart (cos rosu); link Coș standard in tema.
+
+
+================================================================================
+PASUL 8 — SLIDER PRET (FILTRE MAGAZIN)
+================================================================================
+
+FISIERE: site.css, Pages/Client/Products/Index.cshtml, Index.cshtml.cs
+
+EVOLUTIE:
+- noUiSlider: aspect gri, handle centrat pe axa.
+- PASUL 13: interval dinamic din preturile din DB.
+- Eliminat textul fix sub slider („Interval catalog / pas X RON”).
+- Filtrul AJAX: minPrice/maxPrice doar dupa miscarea sliderului.
+
+
+================================================================================
+PASUL 9 — ELIMINARE RETUR SI FIX SUPORT TEHNIC
+================================================================================
+
+- Homepage: Plati securizate, Varietate, Suport dedicat.
+- chatbox.js: toggle #chat-toggle; credentials: same-origin la /api/chat.
+- Footer: email raresmarian3344@gmail.com; fara link Confidentialitate.
+
+
+================================================================================
+PASUL 10 — CORECTII BUILD SI ALTE FIXURI
+================================================================================
+
+- Conflict Static Web Assets (chatbox.css duplicat): sters, stiluri in site.css.
+- ProiectWeb.csproj: CompressStaticWebAssets=false; fara StaticWebAssetBasePath.
+- dotnet clean + stergere obj/bin la nevoie.
+
+
+================================================================================
+PASUL 11 — FILTRE MAGAZIN, MODAL, RECOMANDARI, SEED CATALOG (ISTORIC)
+================================================================================
+
+NOTA: ProductCatalogSeeder a fost folosit temporar, apoi ELIMINAT (pasul 12).
+
+- Panou filtre unificat (.ec-filters-panel).
+- Modal Magazin aliniat cu Favorite.
+- RecommendationService: cache hybrid_model.json.
+- Categorii alimentare (Fructe, Legume, Dulciuri, etc.).
+
+
+================================================================================
+PASUL 12 — RECOMANDARI (3 produse, cross-categorie)
+================================================================================
+
+- RecommendationService.cs: 3 recomandari; prioritate cross-categorie + co-cumparare.
+- Modal: ec-modal-recommendations (fara scroll in lista recomandari).
+- Antrenare/model.py: comenzi reale PostgreSQL -> hybrid_model.json.
+- Fix JS: addEventListener pe carduri recomandari (nume produse cu ghilimele, ex. TCL 65").
+
+Scor: continut 40% + co-cumparare 45% + boost categorie diferita 20%.
+
+Reantrenare: cd Antrenare && python model.py
+
+
+================================================================================
+PASUL 13 — SLIDER PRET DINAMIC (INTERVAL DIN CATALOG)
+================================================================================
+
+- PriceSliderMax / PriceSliderStep calculate din DB la incarcarea magazinului.
+- Rotunjire inteligenta (10/50/100/500 RON dupa gama de preturi).
+
+
+================================================================================
+PASUL 14 — CURATARE COD SEED / GENERARE DATE TEST
+================================================================================
+
+ELIMINAT:
+- Data/SampleOrdersSeedData.cs
+- Data/ProductCatalogSeeder.cs
+- Program.cs: bloc SeedSampleOrders
+- appsettings.Development.json: SeedSampleOrders
+- LangChain: POST /predict-order, test_integration.py
+- Antrenare/products.csv, Antrenare/orders.csv
+
+PASTRAT:
+- Bootstrap Admin/User + cont admin@stock.com / Admin123!
+- Antrenare/model.py (manual, din DB real)
+- GET /health pe serverul AI
+
+
+================================================================================
+PASUL 15 — PANOU BUSINESS INTELLIGENCE ADMIN (CHAT LATERAL)
+================================================================================
+
+UNDE: Pages/Shared/_Layout.cshtml (doar rol Admin)
+      wwwroot/css/site.css
+      wwwroot/js/chatbox.js
+
+FUNCTIONALITATE:
+- Dock vertical „ASISTENT ANALIZĂ” — deschide sidebar dreapta.
+- Butoane rapide: Stagnant | Stoc Critic | Favorite | Comenzi AI
+- Trimit comenzi: admin_stoc_stagnant_30, admin_stoc_critic,
+  admin_analiza_favorite, admin_propunere_comenzi
+- Istoric mesaje in sessionStorage (per utilizator).
+
+FIX SCROLL CHAT ADMIN:
+- .admin-chat-sidebar: flex column, overflow hidden.
+- .chat-body-admin: flex 1, min-height 0, overflow-y auto.
+- Header, quick-actions, footer: flex-shrink 0.
+- chatbox.js: scrollChatToBottom() dupa fiecare mesaj.
+
+COMENZI RAPIDE — RASPUNS DIN .NET (fara Python pentru lista):
+
+  admin_stoc_critic:
+    - Query: Products WHERE Quantity <= 15, ordonat crescator.
+    - Raspuns: **STOC CRITIC:** - Nume: X buc.
+    - Exemplu: Apa minerala 2L la 10 buc. apare corect (nu mai e exclus la < 10).
+
+  admin_stoc_stagnant_30:
+    - Produse fara vanzari in ultimele 30 zile (sau niciodata).
+    - Afisare: „fara vanzari” (nu mai apare „999 zile”).
+    - Altfel: „N zile” de la ultima comanda.
+    - Top 10, sortat descrescator.
+
+  admin_analiza_favorite:
+    - Join Favorites + Products, top 5 dupa numar salvări.
+
+  admin_propunere_comenzi:
+    - Vezi PASUL 16.
+
+
+PROBLEME REZOLVATE (istoric):
+- Lista goala la stoc critic: filtru SQL < 10 excludea exact 10 buc.
+- Raspuns despre cos la comenzi admin: Python trata [] ca fals; comenzi admin
+  cadeau pe suport client. Solutie: procesare in .NET.
+- „Nu am primit date despre produse”: db_context gol catre Python.
+
+
+================================================================================
+PASUL 16 — COMENZI AI (PROPHET) — MESAJ SIMPLU + CANTITATE INTELIGENTA
+================================================================================
+
+UNDE: API/Chatbox.cs — BuildOrderProposalResponseAsync
+      LangChain/stock_prediction.py + ai_server.py (cantitate Prophet)
+      wwwroot/js/chatbox.js (buton Confirmă)
+
+FLUX COMENZI AI:
+1. Alege produsul cu cel mai mic stoc sub 20 buc. (din PostgreSQL).
+2. Incarca istoric vanzari ultimele 14 zile (grupat pe zile, in memorie).
+3. Calculeaza cantitatea:
+   a) Daca serverul Python raspunde (GET /health + POST /chat):
+      -> Prophet via stock_prediction.get_order_proposal() (~52 buc. la stoc 10).
+   b) Altfel fallback .NET CalculeazaCantitateReaprovizionare():
+      -> aceeasi formula (stoc tinta 30 zile, vanzari estimate, stoc critic).
+4. Raspuns JSON catre frontend:
+   - answer: „**Propunere:** {Nume} — stoc actual **{X}** bucăți”
+     (FARA ROP, FARA „Prophet”, FARA vanzari/zi in mesajul principal)
+   - action: { type: execute_order, product, quantity }
+
+BUTON CONFIRMĂ (chatbox.js):
+- „Comandăm {quantity} buc de {product}?”
+- La confirmare: POST /api/chat/execute-order -> creste stoc + email furnizor.
+
+FORMULA CANTITATE (stock_prediction.py / mirror C#):
+- vanzari_zilnice_est: Prophet sau media istoric; default 2.0 buc./zi.
+- stoc_siguranta = ceil(vanzari * lead_time * 0.2), lead_time = 3 zile.
+- stoc_tinta = ceil(vanzari * 30 zile + stoc_siguranta).
+- cantitate = stoc_tinta - stoc_curent; minim 10 buc. la stoc critic (<= 15).
+
+DE CE APAREA 20 BUc. (temporar):
+- Versiune simplificata C#: max(10, 30 - stoc) -> 20 la stoc 10.
+- Inlocuita cu formula Prophet + apel optional Python.
+
+ERORI REZOLVATE:
+- EF: DateTime.ToString in LINQ (nu se traduce in SQL) -> grupare in memorie.
+- Build CS1061: days.Count pe object -> tipizare corecta Dictionary.
+- Eroare Comenzi AI la pregatire date -> mutare completa in .NET + Prophet optional.
+
+
+================================================================================
+PASUL 17 — SUPORT CLIENT (CHAT FLOTANT) SI AI SERVER
+================================================================================
+
+UNDE: LangChain/ai_server.py
+      API/Chatbox.cs — BuildClientSupportContext
+
+CLIENT (rol User, chat flotant):
+- Context trimis: autentificare, rol client, produse_in_cos, pasi rezolvare cos.
+- SUPPORT_PROMPT + Groq (llama-3.1-8b-instant).
+- _cart_troubleshooting_hint pentru cuvinte cheie cos/adaugare.
+- Comenzile admin_* NU mai sunt redirectionate gresit catre suport cos.
+
+ADMIN (mesaje libere in sidebar, nu butoane rapide):
+- Inca pot merge la Python cu db_context (pana la 50 produse).
+- BuildAdminPythonContextAsync pentru intrebari LLM custom.
+
+
+================================================================================
+INSTRUCTIUNI RULARE
+================================================================================
+
+1. Server AI (obligatoriu pentru Prophet exact la Comenzi AI; optional pentru rest):
+   cd LangChain
+   copy .env.example .env
+   :: completeaza GROQ_API_KEY=
+   start_ai_server.bat
+
+2. Aplicatie .NET:
+   cd ProiectWeb\ProiectWeb
+   dotnet run
+   :: la build failed „file locked”: opreste dotnet run (Ctrl+C), apoi rebuild
+
+3. Health AI: GET http://127.0.0.1:8001/health
+
+4. Reantrenare recomandari dupa comenzi noi:
+   cd Antrenare && python model.py
+
+5. Test Business Intelligence (cont Admin):
+   - Stoc Critic / Stagnant / Favorite -> functioneaza fara Python
+   - Comenzi AI -> mesaj simplu; cantitate Prophet daca Python ruleaza
+
+
+================================================================================
+NOTE IMPORTANTE
+================================================================================
+
+- stock_prediction.py (nu Stock_Prediction.py).
+- Prag stoc critic in admin: <= 15 buc. (CriticalStockThreshold in Chatbox.cs).
+- Prophet: recomandat >= 5 zile istoric vanzari; altfel media sau 2.0 buc./zi.
+- GROQ_API_KEY doar in LangChain/.env (nu in git).
+- Email/SMTP: EmailSettings in appsettings.json (Contact + comenzi furnizor).
+- Baza de date: PostgreSQL.
+- Nu exista seed automat produse/comenzi la pornire (cod arhivat în PASUL 24).
+- Cont admin implicit: admin@stock.com / Admin123!
+
+
+================================================================================
+LISTA FISIERE ATINSE (REZUMAT COMPLET)
+================================================================================
+
+Backend / AI:
+  LangChain/stock_prediction.py
+  LangChain/ai_server.py
+  LangChain/requirements.txt
+  LangChain/.env.example
+  LangChain/start_ai_server.bat
+  Antrenare/model.py
+
+.NET:
+  API/Chatbox.cs                    (BI admin, Prophet optional, suport client)
+  appsettings.json
+  appsettings.Development.json
+  Program.cs
+  Services/RecommendationService.cs
+  Pages/Shared/_Layout.cshtml
+  Pages/Index.cshtml, About.*, Contact.*
+  Pages/Client/Products/Index.cshtml, Index.cshtml.cs
+  Pages/Client/Cart/Index.cshtml
+  Pages/Client/Favorites/Index.cshtml
+  ProiectWeb.csproj
+
+Frontend static:
+  wwwroot/css/site.css              (design + chat admin scroll)
+  wwwroot/js/chatbox.js             (client + admin, scroll, execute-order)
+
+Sterse / nu mai folosite:
+  wwwroot/css/chatbox.css
+  Data/ProductCatalogSeeder.cs
+  Data/SampleOrdersSeedData.cs
+  Data/DatabaseMaintenance.cs
+  Data/OrderHistorySeeder.cs
+  LangChain/test_integration.py
+  Antrenare/products.csv, Antrenare/orders.csv
+
+
+================================================================================
+PASUL 18 — UI PAGINI PUBLICE + ADMIN PRODUSE (MAI 2026)
+================================================================================
+
+NOTA: Aspectul vizual din acest pas a fost inlocuit ulterior de PASUL 25 (Fraunces/DM Sans,
+copy magazin, butoane unificate). Pastram detaliile pentru istoric.
+
+HOMEPAGE (Index.cshtml):
+- Eliminat termenul „magazin generalist” / „catalog generalist”.
+- Copy actualizat: platformă online, catalog divers.
+
+DESPRE (About.cshtml + About.cshtml.cs):
+- Conținut refăcut: misiune, viziune, echipă, detalii platformă.
+- Secțiune categorii din DB (listă grid .ec-category-list).
+- Fără cuvântul „generalist”.
+
+ADMIN PRODUSE:
+- Index, _ProductListPartial, Create, Edit — design modern (.ec-admin-*).
+- Tabel responsive, badge stoc critic, paginare stilizată.
+- Formulare Create/Edit în card-uri (.ec-admin-form-card).
+
+FOOTER (_Layout): text fără „generalist”.
+
+
+================================================================================
+PASUL 19 — AUTENTIFICARE & PROFIL
+================================================================================
+
+LOGOUT (Logout.cshtml.cs):
+- După deconectare → RedirectToPage("/Index") (homepage), orice rol.
+
+PROFIL (_ManageNav.cshtml):
+- Eliminate tab-urile Personal data și Two-factor authentication.
+- Păstrate: Profil, Parolă (+ autentificări externe dacă există).
+
+TELEFON (Manage/Index):
+- Validare FE: pattern [0-9]{10,15}, inputmode numeric.
+- Validare BE: RegularExpression + verificare doar cifre.
+
+PAROLĂ (ChangePassword.cshtml.cs):
+- Parola nouă nu poate fi identică cu parola actuală.
+
+
+================================================================================
+PASUL 20 — CĂUTARE, COȘ, EMAIL
+================================================================================
+
+CĂUTARE FĂRĂ DIACRITICE:
+- Services/TextNormalization.cs — RemoveDiacritics, ContainsNormalized.
+- Magazin client + Admin produse: căutare „palarie” = „pălărie”.
+
+STOC LA ADĂUGARE ÎN COȘ:
+- OnPostAddToCart returnează JSON { success, message }.
+- Verificare stoc imediat; mesaj „Stoc insuficient.” în modal (showMessage roșu).
+
+EMAIL CONFIRMARE PLATĂ (OrderSuccess.cshtml.cs):
+- Format linie: „Cantitate x Nume | Preț Unitar | Total linie”.
+
+
+================================================================================
+PASUL 21 — BAZĂ DE DATE: RESET COMENZI + PREȚURI (RULAT O DATĂ, APOI ELIMINAT)
+================================================================================
+
+A fost folosit Data/DatabaseMaintenance.cs la primul run Development (ștergere comenzi +
+ajustare prețuri + AcquisitionCost). Codul a fost ELIMINAT din proiect; arhivă completă
+în PASUL 24. Coloana AcquisitionCost rămâne pe modelul Product.
+
+NUMEROTARE COMENZI:
+- Client Istoric: Comanda #1, #2… per utilizator (cronologic).
+- Admin Orders: numerotare globală #1, #2… din tot magazinul.
+- Paginare: 10 comenzi/pagina (client + admin). Admin: filtre sortare (.ec-sort-bar).
+
+
+================================================================================
+PASUL 22 — CHATBOT SUPORT
+================================================================================
+
+CLIENT (ai_server.py):
+- ESCALATION_KEYWORDS: „tot nu merge”, „nu mă lasă” etc.
+- Dacă utilizatorul repetă problema după pași → ramură fallback (email, captură, alt browser).
+- Nu repetă aceiași pași la infinit.
+
+ADMIN (chatbox.js + _Layout):
+- Input text dezactivat/ascuns — doar butoane rapide BI.
+- sendAdminCommand() apelează direct API-ul.
+
+
+================================================================================
+PASUL 23 — NOTIFICĂRI + AI PRESCRIPTIV
+================================================================================
+
+NOTIFICĂRI NOI:
+- Stoc scăzut la plată reușită (OrderSuccess).
+- Comandă AI acceptată (execute-order în Program.cs).
+
+Services/PrescriptivePricingService.cs:
+- Stagnant ≥30 zile → reducere 5%; ≥60 zile → 10%.
+- Preț redus nu sub marja minimă (AcquisitionCost + 15%).
+- Favorite + top 20% vânzări → sugestie scumpire 5–10%.
+- Motivație calculată în fiecare răspuns.
+
+Chatbox.cs:
+- admin_stoc_stagnant_30 → BuildStagnantAnalysisAsync()
+- admin_analiza_favorite → BuildFavoritesAnalysisAsync()
+
+
+================================================================================
+INSTRUCTIUNI DUPĂ ACTUALIZARE
+================================================================================
+
+1. Oprește dotnet run (Ctrl+C).
+2. Pornește din nou: cd ProiectWeb\ProiectWeb && dotnet run
+   (fără seed automat — vezi PASUL 24 dacă vrei să refaci date test).
+3. Repornește serverul AI pentru suport client îmbunătățit.
+4. Ctrl+F5 în browser (important după modificări CSS/JS — PASUL 25).
+5. Dacă testezi sortarea în magazin: verifică că paginarea rămâne vizibilă după
+   „Preț crescător” / „Nume A-Z” (vezi PASUL 25 — fix filtru preț).
+
+
+================================================================================
+LISTA FISIERE NOI / MODIFICATE (PASII 18–23)
+================================================================================
+
+Noi:
+  Services/TextNormalization.cs
+  Services/NotificationService.cs
+  Services/PrescriptivePricingService.cs
+
+Modificate:
+  Models/Product.cs (+ AcquisitionCost)
+  Data/ApplicationDbContext.cs
+  Program.cs
+  appsettings.Development.json
+  API/Chatbox.cs
+  Pages/Index.cshtml, About.cshtml, About.cshtml.cs
+  Pages/Admin/Products/* (Index, Create, Edit, partial)
+  Pages/Admin/Orders/Index.cshtml(.cs)
+  Pages/Client/Istoric.cshtml(.cs)
+  Pages/Client/Products/Index.cshtml(.cs)
+  Pages/Client/Cart/OrderSuccess.cshtml.cs
+  Areas/Identity/Account/Logout.cshtml.cs
+  Areas/Identity/Account/Manage/_ManageNav.cshtml
+  Areas/Identity/Account/Manage/Index.cshtml(.cs)
+  Areas/Identity/Account/Manage/ChangePassword.cshtml.cs
+  Pages/Shared/_Layout.cshtml
+  wwwroot/css/site.css
+  wwwroot/js/chatbox.js
+  LangChain/ai_server.py
+
+
+================================================================================
+PASUL 24 — ARHIVĂ COD SEED (ELIMINAT DIN PROIECT, IUNIE 2026)
+================================================================================
+
+Toate scripturile de seed au fost SCASE din codul activ după rularea lor o singură dată.
+Datele rămân în PostgreSQL. Pentru reutilizare: copiază secțiunile de mai jos în fișiere
+noi sau rulează manual (vezi instrucțiuni la fiecare bloc).
+
+STARE CURENTĂ PROIECT:
+- Nu există seed la pornire (dotnet run normal).
+- Nu există --seed-orders în Program.cs.
+- Fișiere șterse: Data/OrderHistorySeeder.cs, Data/ProductCatalogSeeder.cs,
+  Data/DatabaseMaintenance.cs.
+
+NOTĂ ProductCatalogSeeder: versiunea de mai jos are 8 categorii × 10 produse.
+Ulterior s-au adăugat 6 categorii alimentare (Fructe, Legume, Dulciuri, Chipsuri,
+Bauturi alcoolice, Bauturi carbogazoase) — același pattern Sample() per categorie.
+
+
+--------------------------------------------------------------------------------
+A) SEED PRODUSE — Data/ProductCatalogSeeder.cs (COMPLET)
+--------------------------------------------------------------------------------
+Rulare (când era în proiect): dotnet run în Development cu SeedCatalog:Enabled=true
+Efect: șterge OrderItems, Favorites, Products; resetează ID produse; inserează catalog.
+
+using Microsoft.EntityFrameworkCore;
+using ProiectWeb.Models;
+
+namespace ProiectWeb.Data;
+
+/// <summary>
+/// Curăță catalogul și inserează exact 10 produse reprezentative per categorie.
+/// Rulează la pornire când SeedCatalog:Enabled = true în appsettings.
+/// </summary>
+public static class ProductCatalogSeeder
+{
+    private const int ProductsPerCategory = 10;
+
+    public static async Task SeedAsync(ApplicationDbContext context, ILogger logger)
+    {
+        var catalog = BuildCatalog();
+
+        logger.LogInformation("Seeding catalog: {Categories} categorii, {Total} produse.",
+            catalog.Count, catalog.Sum(c => c.Value.Count));
+
+        await context.OrderItems.ExecuteDeleteAsync();
+        await context.Favorites.ExecuteDeleteAsync();
+        await context.Products.ExecuteDeleteAsync();
+
+        await context.Database.ExecuteSqlRawAsync(
+            @"ALTER TABLE ""Products"" ALTER COLUMN ""Id"" RESTART WITH 1");
+
+        var allProducts = new List<Product>();
+        var baseDate = DateTime.UtcNow.AddDays(-30);
+
+        foreach (var (category, items) in catalog)
+        {
+            for (var i = 0; i < items.Count; i++)
+            {
+                var (name, desc, price, qty) = items[i];
+                allProducts.Add(new Product
+                {
+                    Name = name,
+                    Category = category,
+                    Description = desc,
+                    Price = price,
+                    Quantity = qty,
+                    Imagine = "default.jpg",
+                    AddedDate = baseDate.AddDays(i)
+                });
+            }
+        }
+
+        context.Products.AddRange(allProducts);
+        await context.SaveChangesAsync();
+
+        logger.LogInformation("Catalog reseed complet: {Count} produse.", allProducts.Count);
+    }
+
+    private static Dictionary<string, List<(string Name, string Desc, decimal Price, int Qty)>> BuildCatalog()
+    {
+        return new Dictionary<string, List<(string, string, decimal, int)>>
+        {
+            ["Telefoane"] = Sample(
+                ("Samsung Galaxy A54", "Smartphone 5G, 128GB, ecran AMOLED 6.4\"", 1299m),
+                ("iPhone 13 reconditionat", "128GB, performanță excelentă, garanție 12 luni", 2499m),
+                ("Xiaomi Redmi Note 13", "108MP cameră, baterie 5000mAh, încărcare rapidă", 999m),
+                ("Motorola Edge 40", "Android curat, ecran 144Hz, design subțire", 1599m),
+                ("Huawei Nova 11", "Fotografii clare, ecran OLED, 256GB", 1899m),
+                ("Google Pixel 7a", "Fotografie computatională, Android pur", 2199m),
+                ("OnePlus Nord 3", "Snapdragon, încărcare 80W, ecran fluid", 1799m),
+                ("Nokia G42 5G", "Construcție durabilă, actualizări lungi", 899m),
+                ("Realme 11 Pro", "Design premium, ecran curbat AMOLED", 1399m),
+                ("Honor 90", "Cameră 200MP, design ergonomic", 1699m)
+            ),
+            ["Calculatoare"] = Sample(
+                ("Laptop Lenovo IdeaPad", "Intel i5, 16GB RAM, SSD 512GB", 3299m),
+                ("MacBook Air M2", "13\", 8GB, 256GB — productivitate mobilă", 5499m),
+                ("ASUS VivoBook 15", "Full HD, tastatură iluminată, Windows 11", 2799m),
+                ("HP Pavilion 14", "Ryzen 5, 8GB, ideal birou și studiu", 2999m),
+                ("Dell Inspiron 16", "Ecran mare, SSD 1TB, multitasking", 4199m),
+                ("Acer Aspire 5", "Raport calitate-preț, autonomie bună", 2599m),
+                ("MSI Modern 14", "Design subțire, business și călătorii", 3499m),
+                ("Lenovo ThinkPad E14", "Tastatură legendară, securitate enterprise", 3899m),
+                ("Surface Laptop Go 3", "Compact, touchscreen, Windows", 3999m),
+                ("Laptop gaming ASUS TUF", "RTX dedicat, răcire eficientă", 4799m)
+            ),
+            ["Televizoare"] = Sample(
+                ("LG OLED 55\"", "4K Smart TV, HDR, webOS", 4299m),
+                ("Samsung QLED 50\"", "Quantum Dot, sunet Dolby Atmos", 3599m),
+                ("Sony Bravia 43\"", "Procesor X1, culori naturale", 2899m),
+                ("Philips Ambilight 55\"", "Experiență imersivă, Android TV", 3199m),
+                ("TCL 65\" 4K", "Google TV, raport excelent preț-calitate", 2799m),
+                ("Hisense 58\"", "Dolby Vision, mod sport", 2499m),
+                ("Panasonic TX-50", "Calitate imagine, tuner digital", 2699m),
+                ("Sharp Aquos 40\"", "Compact pentru dormitor", 1599m),
+                ("Vestel 55\" Smart", "Smart TV accesibil, HDMI multiple", 1999m),
+                ("Grundig 49\"", "Design slim, montare pe perete ușoară", 2199m)
+            ),
+            ["Accesorii"] = Sample(
+                ("Husă silicon smartphone", "Protecție 360°, multiple culori", 49m),
+                ("Încărcător rapid 65W", "USB-C PD, compatibil laptop/telefon", 189m),
+                ("Căști wireless TWS", "Bluetooth 5.3, ANC, autonomie 30h", 299m),
+                ("Powerbank 20000mAh", "Încărcare rapidă, 2 porturi USB", 159m),
+                ("Suport auto telefon", "Prindere ventilație, rotație 360°", 79m),
+                ("Cablu USB-C 2m", "Încărcare și date, nylon împletit", 39m),
+                ("Mouse wireless", "Ergonomic, senzor precis, baterie lungă", 89m),
+                ("Tastatură Bluetooth", "Compactă, compatibilă multi-device", 199m),
+                ("Geantă laptop 15.6\"", "Compartimente multiple, impermeabilă", 149m),
+                ("Webcam Full HD", "Microfon integrat, clip universal", 249m)
+            ),
+            ["Electronice"] = Sample(
+                ("Boxă Bluetooth portabilă", "Sunet puternic, rezistentă la apă IPX7", 349m),
+                ("Smartwatch fitness", "Monitorizare puls, GPS, notificări", 599m),
+                ("Tabletă 10\"", "Android, 64GB, ideal multimedia", 899m),
+                ("Router Wi-Fi 6", "Acoperire mare, securitate WPA3", 399m),
+                ("SSD extern 1TB", "USB 3.2, viteză transfer ridicată", 429m),
+                ("Monitor 27\" IPS", "Full HD, margini subțiri, HDMI", 999m),
+                ("Imprimantă multifuncțională", "Wi-Fi, scanare, cartuș economic", 649m),
+                ("Aspirator robot", "Programare app, senzori obstacole", 1299m),
+                ("Cameră de acțiune 4K", "Stabilizare, carcasă subacvatică", 799m),
+                ("Consolă handheld retro", "Jocuri clasice, ecran color", 299m)
+            ),
+            ["Moda"] = Sample(
+                ("Tricou bumbac premium", "Unisex, croială relaxată, multiple mărimi", 79m),
+                ("Blugi slim fit", "Denim elastic, confort toată ziua", 199m),
+                ("Geacă primăvară", "Impermeabilă ușoară, glugă detașabilă", 349m),
+                ("Rochie casual", "Țesătură respirabilă, stil versatil", 229m),
+                ("Adidași sport", "Talpă amortizantă, design modern", 299m),
+                ("Pantaloni trening", "Material moale, buzunare cu fermoar", 149m),
+                ("Pulover tricotat", "Călduros, potrivit sezon rece", 189m),
+                ("Curea piele naturală", "Cataramă metalică, clasică", 119m),
+                ("Șapcă baseball", "Ajustabilă, protecție solară", 59m),
+                ("Set șosete 5 perechi", "Bumbac, confort sporit", 49m)
+            ),
+            ["Casa & Gradina"] = Sample(
+                ("Set vase gătit 5 piese", "Antiaderent, compatibil inducție", 249m),
+                ("Aspirator vertical", "Fără sac, filtru HEPA", 699m),
+                ("Lampă LED birou", "3 trepte luminozitate, USB", 129m),
+                ("Perdele blackout 2 buc", "Dimensiune standard, inele incluse", 179m),
+                ("Set prosoape baie", "Bumbac 100%, absorbție ridicată", 99m),
+                ("Organizator bucătărie", "Sertare extensibile, economie spațiu", 89m),
+                ("Fierbător electric 1.7L", "Oprire automată, bază rotativă", 119m),
+                ("Covor living 160x230", "Textură moale, ușor de curățat", 399m),
+                ("Set unelte grădină", "5 piese esențiale, mâner ergonomic", 149m),
+                ("Difuzor aromaterapie", "Ultrasunete, lumină ambientală", 79m)
+            ),
+            ["Sport"] = Sample(
+                ("Saltea yoga 6mm", "Antiderapantă, include curea transport", 89m),
+                ("Gantere 2x5kg", "Acoperire neopren, prindere sigură", 129m),
+                ("Corzi elastic fitness", "Set 3 rezistențe, antrenament acasă", 59m),
+                ("Sticlă sport 750ml", "BPA free, capac etanș", 39m),
+                ("Bandă rezistență", "Pentru tonifiere, ghid exerciții inclus", 49m),
+                ("Minge fitness 65cm", "Pomă inclusă, pilates și core", 79m),
+                ("Cronometru digital", "Display mare, magnet spate", 29m),
+                ("Genunchiere sport", "Suport articulații, pereche", 69m),
+                ("Rucsac alergare 12L", "Hidratare, multiple buzunare", 199m),
+                ("Tricou tehnic dry-fit", "Evacuare transpirație, sport intens", 99m)
+            ),
+            ["Beauty"] = Sample(
+                ("Set îngrijire ten", "Curățare + hidratare, ten mixt", 149m),
+                ("Șampon volum 400ml", "Fără sulfați, păr des", 59m),
+                ("Balsam reparator", "Keratină, păr deteriorat", 65m),
+                ("Cremă solară SPF50", "Față și corp, rezistentă apă", 79m),
+                ("Parfum eau de toilette 50ml", "Aromă proaspătă, persistență bună", 199m),
+                ("Set pensule machiaj", "10 piese, păr sintetic moale", 89m),
+                ("Ser vitamina C", "Luminozitate, ten obosit", 119m),
+                ("Deodorant roll-on", "48h protecție, fără alcool", 29m),
+                ("Mască păr hidratantă", "Ulei argan, aplicare săptămânală", 49m),
+                ("Burete aplicare machiaj", "Beauty blender reutilizabil", 35m)
+            )
+        };
+    }
+
+    private static List<(string, string, decimal, int)> Sample(
+        params (string name, string desc, decimal price)[] items)
+    {
+        var rng = new Random(42);
+        return items.Take(ProductsPerCategory)
+            .Select(x => (x.name, x.desc, x.price, rng.Next(15, 120)))
+            .ToList();
+    }
+}
+
+
+
+--------------------------------------------------------------------------------
+B) SEED PRODUSE — Program.cs + appsettings (fragmente)
+--------------------------------------------------------------------------------
+
+appsettings.Development.json:
+"SeedCatalog": {
+    "Enabled": true
+  },
+
+Program.cs (după crearea admin, înainte de pipeline):
+if (app.Environment.IsDevelopment())
+    {
+        var seedCatalog = builder.Configuration.GetValue<bool>("SeedCatalog:Enabled");
+        if (seedCatalog)
+        {
+            using var scope = app.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            await ProductCatalogSeeder.SeedAsync(db, logger);
+        }
+    }
+
+
+--------------------------------------------------------------------------------
+C) MENTENANȚĂ PRODUSE/COMENZI — Data/DatabaseMaintenance.cs (COMPLET)
+--------------------------------------------------------------------------------
+Rulare (când era în proiect): la pornire dacă flag-urile erau true în Development.
+Efect: șterge toate comenzile; ajustează prețuri 0–500 RON + AcquisitionCost.
+
+using Microsoft.EntityFrameworkCore;
+using ProiectWeb.Models;
+
+namespace ProiectWeb.Data;
+
+public static class DatabaseMaintenance
+{
+    /// <summary>
+    /// Șterge toate comenzile și liniile asociate.
+    /// </summary>
+    public static async Task ClearAllOrdersAsync(ApplicationDbContext db)
+    {
+        await db.OrderItems.ExecuteDeleteAsync();
+        await db.Orders.ExecuteDeleteAsync();
+    }
+
+    /// <summary>
+    /// Ajustează prețurile produselor: 0–500 RON, majoritatea sub 100 RON.
+    /// Setează AcquisitionCost la ~65% din preț (marjă minimă pentru AI).
+    /// </summary>
+    public static async Task AdjustProductPricesAsync(ApplicationDbContext db)
+    {
+        var products = await db.Products.ToListAsync();
+        if (products.Count == 0)
+            return;
+
+        var premiumCategories = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Calculatoare", "Telefoane", "Laptopuri", "Electronice", "TV & Audio"
+        };
+
+        foreach (var p in products)
+        {
+            decimal price;
+            if (premiumCategories.Contains(p.Category))
+            {
+                price = 150 + (p.Id % 35) * 10; // 150–490
+            }
+            else if (p.Category.Contains("Bauturi", StringComparison.OrdinalIgnoreCase)
+                     || p.Category.Contains("Aliment", StringComparison.OrdinalIgnoreCase)
+                     || p.Category.Contains("Fructe", StringComparison.OrdinalIgnoreCase)
+                     || p.Category.Contains("Legume", StringComparison.OrdinalIgnoreCase))
+            {
+                price = 5 + (p.Id % 9) * 5; // 5–45
+            }
+            else
+            {
+                price = 15 + (p.Id % 17) * 5; // 15–95
+            }
+
+            if (price > 500) price = 500;
+            if (price < 1) price = 1;
+
+            p.Price = price;
+            p.AcquisitionCost = Math.Round(price * 0.65m, 2);
+        }
+
+        await db.SaveChangesAsync();
+    }
+}
+
+
+Variantă ulterioară (o rulare): AdjustProductPricesAsync includea și:
+  ALTER TABLE "Products" ADD COLUMN IF NOT EXISTS "AcquisitionCost" ...
+
+appsettings.Development.json:
+"DatabaseMaintenance": {
+    "ClearOrdersOnStartup": true,
+    "AdjustProductPricesOnStartup": true
+  },
+
+Program.cs:
+var maintenance = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var clearOrders = maintenance.GetValue("DatabaseMaintenance:ClearOrdersOnStartup", false);
+    var adjustPrices = maintenance.GetValue("DatabaseMaintenance:AdjustProductPricesOnStartup", false);
+
+    if (clearOrders || adjustPrices)
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        if (clearOrders)
+        {
+            await DatabaseMaintenance.ClearAllOrdersAsync(db);
+            Console.WriteLine("[DB] Toate comenzile au fost șterse.");
+        }
+        if (adjustPrices)
+        {
+            await DatabaseMaintenance.AdjustProductPricesAsync(db);
+            Console.WriteLine("[DB] Prețurile produselor au fost ajustate (0–500 RON).");
+        }
+    }
+
+
+--------------------------------------------------------------------------------
+D) SEED COMENZI ISTORICE — Data/OrderHistorySeeder.cs (COMPLET)
+--------------------------------------------------------------------------------
+Rulare (când era în proiect):
+  cd ProiectWeb\ProiectWeb
+  dotnet run -- --seed-orders
+  dotnet run -- --seed-orders --force   (dacă existau deja comenzi pentru cei 2 useri)
+
+Utilizatori: raresmarian3344@gmail.com, raresmarian604@gmail.com (parolă TestUser123!)
+~90 comenzi, ~4 luni istoric, fiecare produs în ≥3 comenzi, notificări stoc cu data comenzii.
+După seed: cd Antrenare && python model.py (reantrenare hybrid_model.json)
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using ProiectWeb.Models;
+
+namespace ProiectWeb.Data;
+
+/// <summary>
+/// Populează istoricul de comenzi pentru testare (recomandări, statistici, notificări).
+/// Rulează o singură dată: dotnet run -- --seed-orders
+/// </summary>
+public static class OrderHistorySeeder
+{
+    private const string Email1 = "raresmarian3344@gmail.com";
+    private const string Email2 = "raresmarian604@gmail.com";
+    private const string DefaultPassword = "TestUser123!";
+    private const int MinAppearancesPerProduct = 3;
+
+    public static async Task SeedAsync(IServiceProvider services, bool force = false)
+    {
+        var db = services.GetRequiredService<ApplicationDbContext>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+
+        var u1 = await userManager.FindByEmailAsync(Email1);
+        var u2 = await userManager.FindByEmailAsync(Email2);
+        var userIds = new[] { u1?.Id, u2?.Id }.Where(id => id != null).Cast<string>().ToList();
+
+        if (userIds.Count > 0 && !force)
+        {
+            var existingForUsers = await db.Orders.CountAsync(o => userIds.Contains(o.UserId));
+            if (existingForUsers > 0)
+            {
+                Console.WriteLine($"[Seed] Există deja {existingForUsers} comenzi pentru acești utilizatori.");
+                Console.WriteLine("[Seed] Folosește --seed-orders --force pentru a adăuga din nou.");
+                return;
+            }
+        }
+
+        var products = await db.Products.OrderBy(p => p.Id).ToListAsync();
+        if (products.Count == 0)
+        {
+            Console.WriteLine("[Seed] Nu există produse în baza de date.");
+            return;
+        }
+
+        var user1 = await EnsureUserAsync(userManager, Email1, "Rares");
+        var user2 = await EnsureUserAsync(userManager, Email2, "Marian");
+
+        var byCategory = products.GroupBy(p => p.Category).ToDictionary(g => g.Key, g => g.ToList());
+        var categories = byCategory.Keys.ToList();
+
+        var stock = products.ToDictionary(p => p.Id, p => p.Quantity);
+        var plannedOrders = BuildOrderPlan(products, byCategory, categories, user1.Id, user2.Id);
+
+        plannedOrders = plannedOrders.OrderBy(o => o.Date).ToList();
+
+        int created = 0;
+        foreach (var plan in plannedOrders)
+        {
+            var validItems = new List<(Product Product, int Quantity)>();
+            foreach (var (productId, preferredQty) in plan.Items)
+            {
+                var product = products.FirstOrDefault(p => p.Id == productId);
+                if (product == null) continue;
+
+                var qty = ResolveQuantity(stock, productId, preferredQty);
+                if (qty <= 0) continue;
+
+                validItems.Add((product, qty));
+            }
+
+            if (validItems.Count == 0) continue;
+
+            var order = new Order
+            {
+                UserId = plan.UserId,
+                OrderDate = plan.Date,
+                IsPaid = true,
+                StripeSessionId = null,
+            };
+
+            foreach (var (product, qty) in validItems)
+            {
+                order.Items.Add(new OrderItem { ProductId = product.Id, Quantity = qty });
+            }
+
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            foreach (var (product, qty) in validItems)
+            {
+                var qtyBefore = stock[product.Id];
+                stock[product.Id] = Math.Max(0, qtyBefore - qty);
+                product.Quantity = stock[product.Id];
+
+                db.Notifications.Add(new Notification
+                {
+                    Message = $"Stoc scăzut: «{product.Name}» {qtyBefore} → {product.Quantity} buc. (comandă #{order.Id}).",
+                    DateCreated = plan.Date,
+                });
+            }
+
+            await db.SaveChangesAsync();
+            created++;
+        }
+
+        Console.WriteLine($"[Seed] {created} comenzi create pentru {Email1} și {Email2}.");
+        Console.WriteLine($"[Seed] Produse acoperite: {products.Count}, perioadă ~4 luni până acum.");
+    }
+
+    private static int ResolveQuantity(Dictionary<int, int> stock, int productId, int preferred)
+    {
+        if (!stock.TryGetValue(productId, out var available) || available <= 0)
+            return 0;
+
+        var qty = Math.Clamp(preferred, 1, 4);
+        if (available < qty) qty = available;
+        return qty;
+    }
+
+    private static List<OrderPlan> BuildOrderPlan(
+        List<Product> products,
+        Dictionary<string, List<Product>> byCategory,
+        List<string> categories,
+        string user1Id,
+        string user2Id)
+    {
+        var plans = new List<OrderPlan>();
+        var now = DateTime.UtcNow;
+
+        var dayOffsets = new[]
+        {
+            118, 112, 105, 98, 92, 85, 78, 72, 65, 58,
+            52, 45, 38, 32, 28, 24, 21, 18, 14, 11,
+            8, 6, 4, 3, 2, 1
+        };
+
+        var userIds = new[] { user1Id, user2Id };
+
+        var pool = new List<int>();
+        foreach (var p in products)
+            for (int k = 0; k < MinAppearancesPerProduct; k++)
+                pool.Add(p.Id);
+        ShuffleDeterministic(pool, seed: 42);
+
+        int poolIdx = 0;
+        for (int i = 0; i < dayOffsets.Length; i++)
+        {
+            var daysAgo = dayOffsets[i];
+            var hour = 9 + (i * 3) % 11;
+            var minute = (i * 17) % 60;
+            var date = now.Date.AddDays(-daysAgo).AddHours(hour).AddMinutes(minute);
+            var userId = userIds[i % 2];
+
+            int basketSize = daysAgo > 60 ? 6 : daysAgo > 30 ? 5 : 4;
+            var items = TakeBasketFromPool(pool, ref poolIdx, basketSize, products, byCategory, categories, i);
+
+            plans.Add(new OrderPlan(date, userId, items));
+        }
+
+        while (poolIdx < pool.Count)
+        {
+            var extraDay = 90 - (plans.Count % 80);
+            if (extraDay < 1) extraDay = 1;
+            var date = now.Date.AddDays(-extraDay).AddHours(14 + plans.Count % 6);
+            var userId = userIds[plans.Count % 2];
+            var items = TakeBasketFromPool(pool, ref poolIdx, 5, products, byCategory, categories, plans.Count);
+            plans.Add(new OrderPlan(date, userId, items));
+        }
+
+        return plans;
+    }
+
+    private static List<(int ProductId, int Quantity)> TakeBasketFromPool(
+        List<int> pool,
+        ref int poolIdx,
+        int basketSize,
+        List<Product> products,
+        Dictionary<string, List<Product>> byCategory,
+        List<string> categories,
+        int orderIndex)
+    {
+        var items = new List<(int ProductId, int Quantity)>();
+        var used = new HashSet<int>();
+
+        while (items.Count < basketSize && poolIdx < pool.Count)
+        {
+            var pid = pool[poolIdx++];
+            if (!used.Add(pid)) continue;
+            items.Add((pid, PreferredQty(orderIndex, pid)));
+        }
+
+        if (items.Count >= 2 && categories.Count > 1)
+        {
+            var productMap = products.ToDictionary(p => p.Id);
+            var catsInBasket = items
+                .Select(i => productMap.GetValueOrDefault(i.ProductId)?.Category)
+                .Where(c => c != null)
+                .Distinct()
+                .ToList();
+
+            if (catsInBasket.Count == 1)
+            {
+                var otherCat = categories.First(c => c != catsInBasket[0]);
+                var cross = byCategory[otherCat]
+                    .OrderBy(p => (p.Id + orderIndex) % byCategory[otherCat].Count)
+                    .FirstOrDefault(p => !used.Contains(p.Id));
+
+                if (cross != null)
+                {
+                    used.Add(cross.Id);
+                    items.Add((cross.Id, 1));
+                }
+            }
+        }
+
+        return items;
+    }
+
+    private static int PreferredQty(int orderIndex, int productId)
+    {
+        var roll = (orderIndex * 7 + productId * 13) % 10;
+        return roll switch
+        {
+            >= 8 => 3,
+            >= 4 => 2,
+            _ => 1,
+        };
+    }
+
+    private static void ShuffleDeterministic(List<int> list, int seed)
+    {
+        var rng = new Random(seed);
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
+        }
+    }
+
+    private static async Task<ApplicationUser> EnsureUserAsync(
+        UserManager<ApplicationUser> userManager,
+        string email,
+        string nickname)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user != null) return user;
+
+        user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+            Nickname = nickname,
+        };
+
+        var result = await userManager.CreateAsync(user, DefaultPassword);
+        if (!result.Succeeded)
+            throw new InvalidOperationException(
+                $"Nu am putut crea utilizatorul {email}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+
+        await userManager.AddToRoleAsync(user, "User");
+        return user;
+    }
+
+    private sealed record OrderPlan(DateTime Date, string UserId, List<(int ProductId, int Quantity)> Items);
+}
+
+
+Program.cs:
+if (args.Contains("--seed-orders"))
+{
+    using var seedScope = app.Services.CreateScope();
+    var force = args.Contains("--force");
+    await OrderHistorySeeder.SeedAsync(seedScope.ServiceProvider, force);
+    return;
+}
+
+
+--------------------------------------------------------------------------------
+SFÂRȘIT ARHIVĂ SEED
+--------------------------------------------------------------------------------
+
+
+================================================================================
+PASUL 25 — UI RETAIL, COPY MAGAZIN, BUTOANE, PAGINARE (IUNIE 2026)
+================================================================================
+
+Context: al doilea val de redesign — aspect mai modern/editorial, text orientat spre
+magazin (echipa mica, produse), fara limbaj de platforma software / AI / livrari /
+reduceri / suport telefonic.
+
+DESIGN (wwwroot/css/site.css):
+- Fonturi: Fraunces (titluri) + DM Sans (corp).
+- Paleta: crem (#e8e2d8), negru cald (#121110), terracotta (#b8472f), verde salvie (#3d5347).
+- Fundal cu grid subtil; navbar blur; hero split (.ec-hero-v2) + grila bento (.ec-bento).
+- Fara iconite Bootstrap (CDN eliminat din _Layout); fara casute cu simboluri AI.
+- Sistem unificat butoane (.btn, .btn-ec-primary, .btn-ec-ghost, .btn-outline-*,
+  .btn-sort, .btn-xs, .connect-btn, .fav-btn): umbra, hover, focus, stari active.
+- Paginare stilizata (.ec-admin-pagination) — magazin, comenzi, notificari.
+
+PAGINI PUBLICE — COPY MAGAZIN:
+- Index.cshtml + Index.cshtml.cs: hero magazin, categorii din DB (.ec-cat-chips),
+  valori echipa, citat, CTA contact. Butoane: „Inregistreaza-te” / „Conecteaza-te”.
+- About.cshtml: poveste depozit, echipa 8 persoane, valori (produse reale, preturi clare,
+  suport pe email). Fara ASP.NET, recomandari ML, livrari, reduceri.
+- Contact.cshtml: mesaje pe email; formular simplu.
+- Footer (_Layout): descriere magazin, nu „platforma/catalog cont client”.
+- Client/Products: header .ec-shop-header; filtre fara iconite.
+
+ELIMINAT DIN TEXT (site public):
+- Promisiuni livrare / urmarire status comenzi in cont.
+- Mentii reduceri / transport la final.
+- „Oameni la telefon” → „Suport pe email”.
+- OrderSuccess: fara text livrare; doar confirmare comanda.
+
+COMENZI — PAGINARE SI SORTARE ADMIN:
+- Pages/Admin/Orders/Index.cshtml(.cs):
+  * PageSize = 10; parametru Sort (newest, oldest, largest, smallest).
+  * .ec-sort-bar cu butoane active; total comanda in header accordion.
+- Pages/Client/Istoric.cshtml(.cs): PageSize = 10, paginare jos.
+
+NOTIFICARI ADMIN — PAGINARE:
+- Pages/Admin/Notifications/Index.cshtml(.cs):
+  * [Authorize(Roles = Admin)]; PageSize = 10; UI romana; tabel admin.
+
+FIX SORTARE MAGAZIN + PAGINARE (bug iunie 2026):
+- Problema: la sortare AJAX se aplica filtru pret (min/max slider), dar OnGetAsync
+  incarca produsele FARA filtru pret → dupa sortare dispar produse / paginarea.
+- Rezolvare (Index.cshtml.cs):
+  * OnGetAsync: LoadProducts(..., PriceSliderMin, PriceSliderMax) dupa SetPriceRangeFromCatalogAsync.
+  * PageNumber clamped intre 1 si TotalPages.
+- Rezolvare (Index.cshtml JS): currentPage = 1 la schimbarea sortarii; setSortActive().
+- _ProductListPartial.cshtml: paginarea afisata separat (si cand lista e goala pe pagina).
+
+ALTE FISIERE ATINSE (pasul 25):
+  Pages/Index.cshtml(.cs), About.cshtml, Contact.cshtml
+  Pages/Shared/_Layout.cshtml, _LoginPartial.cshtml
+  Pages/Client/Products/Index.cshtml, _ProductListPartial.cshtml, Index.cshtml.cs
+  Pages/Client/Cart/Index.cshtml, OrderSuccess.cshtml
+  Pages/Client/Favorites/Index.cshtml, Istoric.cshtml(.cs), Statistici/Statistici.cshtml
+  Pages/Admin/Orders/Index.cshtml(.cs)
+  Pages/Admin/Notifications/Index.cshtml(.cs)
+  Pages/Admin/Products/*, TopFavorites.cshtml
+  Areas/Identity/Account/ForgotPassword.cshtml, ResendEmailConfirmation.cshtml
+  wwwroot/css/site.css
+
+NOTA: PASUL 18 (UI Navy/Coral/Plus Jakarta) a fost inlocuit vizual de pasul 25.
+Logica functionala din pasii 19–24 ramane valabila.
+
+
+================================================================================
+LISTA FISIERE MODIFICATE (PASUL 25 — REZUMAT)
+================================================================================
+
+  wwwroot/css/site.css
+  Pages/Index.cshtml, Index.cshtml.cs
+  Pages/About.cshtml, Contact.cshtml
+  Pages/Shared/_Layout.cshtml, _LoginPartial.cshtml
+  Pages/Client/Products/Index.cshtml(.cs), _ProductListPartial.cshtml
+  Pages/Client/Istoric.cshtml(.cs)
+  Pages/Client/Cart/*, Favorites/Index.cshtml, Statistici/Statistici.cshtml
+  Pages/Admin/Orders/Index.cshtml(.cs)
+  Pages/Admin/Notifications/Index.cshtml(.cs)
+  Pages/Admin/Products/*, TopFavorites.cshtml
+  Services/ProductImageService.cs
+  Program.cs (--sync-product-images, static files /Imagini)
+
+
+================================================================================
+PASUL 26 — IMAGINI PRODUSE (folder Imagini + ProductImageService)
+================================================================================
+
+CE S-A FACUT:
+- Imaginile produselor sunt in **ProiectWeb/Imagini/** (JPG), nu in wwwroot/images/produse.
+- In PostgreSQL, campul Product.Imagine = **doar numele fisierului** (ex. Samsung Galaxy A54.jpg).
+- ProductImageService: potrivire dupa nume produs; caractere interzise Windows (", *, ?, etc.)
+  sunt ignorate la comparatie — ex. produs LG OLED 55" -> fisier LG OLED 55.jpg.
+- Fallback: Imagine negasita.jpg
+- Servire statica: /Imagini/{fisier}
+- Admin Create/Edit/Delete: upload/sterge in folder Imagini
+- CLI sincronizare DB: dotnet run -- --sync-product-images (din ProiectWeb/ProiectWeb)
+
+FISIERE:
+  ProiectWeb/Imagini/*.jpg
+  ProiectWeb/ProiectWeb/Services/ProductImageService.cs
+  ProiectWeb/ProiectWeb/Program.cs
+  Pages/_ViewImports.cshtml (@inject ProductImageService)
+  Views: _ProductListPartial, Favorites, Istoric, TopFavorites, Admin Edit
+  RecommendationService (ImageUrl in JSON recomandari)
+
+
+================================================================================
+PASUL 27 — DOCUMENTATIE LICENTA (cap. 2 extins, citari ca Tudor Chițu)
+================================================================================
+
+CE S-A FACUT:
+- Licenta_E-commerce_SABLON.md: Capitolul 2 = DOAR tehnologii (paralel Tudor: ASP.NET, PostgreSQL,
+  Stripe, scikit-learn/Prophet/LLM/FastAPI etc.). Implementare mutata in cap. 3-4.
+
+FISIER: Licenta_E-commerce_SABLON.md (sectiunile Capitolul 2, Bibliografie, 1.2)
+
+
+================================================================================
+GHID POZE LICENTA — CHECKLIST 1-1 (31 PASI)
+================================================================================
+
+Document complet (structura dupa Licenta_Tudor_Chitu.pdf):
+  **Licenta_E-commerce_SABLON.md**
+    - PREGATIRE LICENTA (Word, conturi, pornire app)
+    - GHID TABELE SI DIAGRAME (draw.io)
+    - GHID POZE — tabel PARTEA A (6 diagrame) + PARTEA B (25 capturi)
+    - Text scurt cap. 4 ca la Tudor (paragrafe + Figura X.Y italic)
+
+Inainte de orice poza:
+  1. PostgreSQL pornit
+  2. cd ProiectWeb\ProiectWeb && dotnet run
+  3. cd LangChain && start_ai_server.bat (pentru AI/Prophet/chat)
+  4. Admin: admin@stock.com / Admin123!
+
+Tool captura: Windows + Shift + S -> lipeste in Word.
+Sub poza: *Figura X.Y: titlu* (Times 12, italic) — ca in PDF-ul model.
+
+--- DIAGRAme (draw.io / Word) ---
+
+ 1. Fig 1.1 — Arhitectura Browser <-> ASP.NET <-> PostgreSQL + Python :8001
+ 2. Fig 1.2 — Tabel comparatie eMAG / Shopify / proiect (5 coloane)
+ 3. Fig 2.1 — Arbore VS: Pages, Services, API, Data, wwwroot
+ 4. Fig 2.2 — Diagrama ER (6 entitati)
+ 5. Fig 2.3 — Flux recomandari (model.py -> hybrid_model.json)
+ 6. Fig 3.3 — Flux Prophet Comenzi AI -> Confirmare
+
+--- SCREENSHOT-URI ---
+
+ 7. Fig 3.2 — Modal magazin: 3 recomandari
+ 8. Fig 3.4 — Admin Analiza stoc -> Comenzi -> propunere
+ 9. Fig 3.5 — Chat client (buton flotant jos-dreapta)
+10. Fig 3.6 — Stoc critic (<=15 buc)
+11. Fig 3.8 — Stagnant sau Favorite (pret sugerat)
+12. Fig 4.1 — Acasa + Login + Register (colaj stanga/dreapta)
+13. Fig 4.2 — Profil + Schimba parola
+14. Fig 4.3 — Magazin: filtre + sortare + imagini produse + paginare
+15. Fig 4.4 — Modal: Adauga in cos
+16. Fig 4.5 — Favorite client
+17. Fig 4.6 — Cos (2+ produse, Plateste)
+18. Fig 4.7 — Stripe / plata confirmata
+19. Fig 4.8 — (opt) Email confirmare
+20. Fig 4.9 — Istoric comenzi #1 #2 + paginare
+21. Fig 4.10 — (opt) Statistici client
+22. Fig 4.11 — Admin Produse (tabel)
+23. Fig 4.12 — Formular Produs nou + Edit (upload imagine) — MUST
+24. Fig 4.13 — Admin Comenzi: sortare + accordion + paginare
+25. Fig 4.14 — Admin Notificari + paginare
+26. Fig 4.15 — (opt) Top favorite admin
+27. Fig 4.16 — Dupa Confirmare Comenzi AI (notificare + stoc)
+28. Fig 4.17 — Acasa + Despre (+ Contact opt)
+29. Fig 4.18 — Folder Imagini + produs cu " in nume (fisier fara ")
+30. Fig 2.4 — (recom) Explorer ProiectWeb/Imagini
+31. Fig A.1 — (opt) http://127.0.0.1:8001/health
+
+--- PRIORITATE ---
+
+ MUST: 1, 2, 4, 6, 8, 10, 14, 15, 17, 20, 22, 23, 24, 25
+ Recomandat: 3, 5, 7, 9, 11, 12, 13, 16, 18, 27, 28, 29, 30
+ Optional: 19, 21, 26, 31, 3.3b (grafic Prophet)
+
+Detalii complete (text Word, pasi, ce trebuie vizibil): Licenta_E-commerce_SABLON.md
+
+
+================================================================================
+SFARSIT RAPORT
+================================================================================

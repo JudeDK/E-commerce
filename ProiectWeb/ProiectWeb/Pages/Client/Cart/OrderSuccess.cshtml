@@ -1,44 +1,32 @@
 ﻿@page
 @model ProiectWeb.Pages.Client.Cart.OrderSuccessModel
 @{
-    ViewData["Title"] = "Plată Reușită";
+    ViewData["Title"] = "Plată reușită";
 }
 
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6 text-center">
-            <div class="card shadow border-0">
-                <div class="card-body p-5">
-                    <div class="mb-4">
-                        <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
-                    </div>
-                    <h2 class="fw-bold text-dark">Plată confirmată!</h2>
-                    <p class="text-muted">Îți mulțumim pentru comandă. Tranzacția a fost procesată cu succes prin Stripe (Mod Test).</p>
-                    <hr class="my-4">
-                    <p class="mb-4">Produsele tale vor fi pregătite pentru livrare în cel mai scurt timp.</p>
+        <div class="col-md-7">
+            <div class="ec-admin-card p-4 p-md-5">
+                <div class="ec-order-success">
+                    <h2 class="fw-bold mb-2">Plată confirmată</h2>
+                    <p class="text-muted mb-0">Comanda ta a fost înregistrată. Tranzacția a fost procesată prin Stripe (mod test).</p>
+                </div>
 
-                    <div class="d-grid gap-2">
-                        <a href="/Client/Products/Index" class="btn btn-primary btn-lg">
-                            <i class="bi bi-house-door"></i> Înapoi la Magazin
-                        </a>
-                        <a href="/Client/Istoric" class="btn btn-outline-secondary">
-                            <i class="bi bi-list-check"></i> Vezi comenzile mele
-                        </a>
-                    </div>
+                <p class="mb-4">Îți mulțumim — comanda ta a fost înregistrată cu succes.</p>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="/Client/Products/Index" class="btn btn-ec-primary">Înapoi la magazin</a>
+                    <a href="/Client/Istoric" class="btn btn-outline-secondary">Vezi comenzile mele</a>
                 </div>
             </div>
-            <div class="mt-4 text-muted small">
-                ID Tranzacție: <span class="badge bg-light text-dark">@Request.Query["sessionId"]</span>
-            </div>
+
+            @if (!string.IsNullOrEmpty(Request.Query["sessionId"]))
+            {
+                <p class="mt-4 text-muted small text-center">
+                    ID tranzacție: <code>@Request.Query["sessionId"]</code>
+                </p>
+            }
         </div>
     </div>
 </div>
-
-<style>
-    body {
-        background-color: #f8f9fa;
-    }
-    .card {
-        border-radius: 15px;
-    }
-</style>

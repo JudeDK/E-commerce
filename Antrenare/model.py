@@ -12,7 +12,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 # Calea furnizată de tine pentru proiectul .NET
 # Folosim 'r' în fața ghilimelelor pentru a trata corect caracterele '\' din Windows
-DESTINATION_PATH = r"C:\Users\User\Desktop\ProiectWeb\ProiectWeb\hybrid_model.json"
+DESTINATION_PATH = r"C:\Users\User\Desktop\E-commerce\ProiectWeb\ProiectWeb\hybrid_model.json"
 
 db_config = {
     "dbname": "E-commerce",

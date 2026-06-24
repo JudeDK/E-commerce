@@ -1,33 +1,29 @@
-﻿@page
+@page
 @model ProiectWeb.Pages.Client.Products.IndexModel
 
 @{
-    ViewData["Title"] = "Product Catalog";
+    ViewData["Title"] = "Magazin";
 }
 
-<div class="row">
-    <div class="col-md-3">
-        <div class="card shadow-sm mb-3">
-            <div class="card-header bg-light"><strong>Căutare</strong></div>
-            <div class="card-body">
-                <input type="text" id="searchInput" placeholder="Caută produse..." class="form-control" />
-            </div>
-        </div>
+<div class="ec-shop-header mb-4">
+    <p class="ec-kicker">Catalog</p>
+    <h1>Produsele noastre</h1>
+    <p class="text-muted mb-0">Alege din categoriile noastre — stoc actualizat, prețuri clare.</p>
+</div>
 
-        <div class="card shadow-sm mb-3">
-            <div class="card-header bg-light"><strong>Sortare</strong></div>
-            <div class="card-body">
-                <button id="sortNameAsc" class="btn btn-outline-primary btn-sm w-100 mb-2">Nume ↑</button>
-                <button id="sortNameDesc" class="btn btn-outline-primary btn-sm w-100 mb-2">Nume ↓</button>
-                <button id="sortPriceAsc" class="btn btn-outline-primary btn-sm w-100 mb-2">Preț ↑</button>
-                <button id="sortPriceDesc" class="btn btn-outline-primary btn-sm w-100">Preț ↓</button>
-            </div>
-        </div>
+<div class="row g-4">
+    <div class="col-lg-3">
+        <aside class="ec-filters-panel">
+            <h6>Filtre</h6>
 
-        <div class="card shadow-sm mb-3">
-            <div class="card-header bg-light"><strong>Categorie</strong></div>
-            <div class="card-body">
-                <select id="categorySelect" class="form-select">
+            <div class="ec-filter-block">
+                <div class="ec-filter-label">Căutare</div>
+                <input type="text" id="searchInput" placeholder="Nume produs..." class="form-control form-control-sm" />
+            </div>
+
+            <div class="ec-filter-block">
+                <div class="ec-filter-label">Categorie</div>
+                <select id="categorySelect" class="form-select form-select-sm">
                     <option value="">Toate categoriile</option>
                     @foreach (var category in Model.Categories)
                     {
@@ -35,18 +31,25 @@
                     }
                 </select>
             </div>
-        </div>
 
-        <div class="card shadow-sm mb-3">
-            <div class="card-header bg-light"><strong>Filtru preț</strong></div>
-            <div class="card-body">
+            <div class="ec-filter-block">
+                <div class="ec-filter-label">Preț (RON)</div>
                 <div id="priceSlider"></div>
             </div>
-        </div>
+
+            <div class="ec-filter-block">
+                <div class="ec-filter-label">Sortare</div>
+                <div class="d-grid gap-2">
+                    <button type="button" id="sortNameAsc" class="btn btn-sort btn-sm">Nume A → Z</button>
+                    <button type="button" id="sortNameDesc" class="btn btn-sort btn-sm">Nume Z → A</button>
+                    <button type="button" id="sortPriceAsc" class="btn btn-sort btn-sm">Preț crescător</button>
+                    <button type="button" id="sortPriceDesc" class="btn btn-sort btn-sm">Preț descrescător</button>
+                </div>
+            </div>
+        </aside>
     </div>
 
-    <div class="col-md-9">
-        <h2 class="mb-4">Catalog Produse</h2>
+    <div class="col-lg-9">
         <div id="messageContainer">
             @if (TempData["Message"] != null)
             {
@@ -59,35 +62,35 @@
     </div>
 </div>
 
-<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="width: 80vw; max-width: 900px;">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow-lg">
             <div class="modal-body d-flex flex-column flex-md-row p-0" style="min-height: 450px;">
 
-                <div id="recommendationsSection" class="p-3" style="width: 30%; background: #f1f3f5; border-right: 1px solid #dee2e6;">
-                    <h6 class="text-dark border-bottom pb-2 mb-3"><i class="bi bi-hand-thumbs-up"></i> Recomandări</h6>
-                    <div id="recommendationsList">
-                    </div>
+                <div id="recommendationsSection" class="p-3 bg-light border-end ec-modal-recommendations">
+                    <h6 class="text-dark border-bottom pb-2 mb-3 fw-bold">Recomandări</h6>
+                    <div id="recommendationsList"></div>
                 </div>
 
-                <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4 text-center">
+                <div class="flex-grow-1 d-flex flex-column justify-content-center align-items-center p-4 text-center position-relative">
                     <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
-                    <img id="modalImage" src="" alt="" class="mb-3 shadow-sm" style="width: 100%; max-width: 280px; height: 220px; object-fit: cover; border-radius: 8px;">
+
+                    <img id="modalImage" src="" alt="" class="mb-3 shadow-sm rounded" style="width: 100%; max-width: 280px; height: 220px; object-fit: cover;">
                     <h4 id="modalName" class="mb-2 fw-bold"></h4>
                     <p id="modalPrice" class="fs-5 text-success fw-bold mb-2" data-unit-price="0"></p>
-                    <p id="modalDescription" class="text-muted mb-4 px-3" style="font-size: 0.9rem;"></p>
+                    <p id="modalDescription" class="text-muted mb-4 px-3 small"></p>
 
                     <div class="d-flex align-items-center justify-content-center mb-3">
                         <button id="decreaseQty" class="btn btn-outline-secondary btn-sm">-</button>
-                        <input type="text" id="quantityInput" value="1" class="form-control form-control-sm mx-2" style="width:60px; text-align:center;" />
+                        <input type="text" id="quantityInput" value="1" class="form-control form-control-sm mx-2" style="width:60px; text-align:center;" readonly />
                         <button id="increaseQty" class="btn btn-outline-secondary btn-sm">+</button>
                     </div>
 
                     <form id="addToCartForm" class="w-100 px-4">
                         <input type="hidden" id="productIdInput" name="id" value="" />
                         <input type="hidden" id="productQtyInput" name="quantity" value="1" />
-                        <button type="button" id="modalAddToCartBtn" class="btn btn-primary w-100 py-2">
-                            <i class="bi bi-cart-plus"></i> Adaugă în coș
+                        <button type="button" id="modalAddToCartBtn" class="btn btn-ec-primary w-100 py-2">
+                            Adaugă în coș
                         </button>
                         @Html.AntiForgeryToken()
                     </form>
@@ -99,249 +102,252 @@
 
 @section Scripts {
     <link href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.7.0/nouislider.min.js"></script>
 
     <script>
-             // 1. Variabile globale pentru starea paginii
-             let currentPage = 1;
-             let currentSort = "";
-             let currentCategory = "";
-             let minPrice = 0;
-             let maxPrice = 150;
+        const IMG_NOT_FOUND = '@ProductImages.GetUrlFromFileName(ProductImageService.NotFoundFileName)';
+        let currentPage = 1;
+        let currentSort = "";
+        let currentCategory = "";
+        const priceRangeMin = @Model.PriceSliderMin;
+        const priceRangeMax = @Model.PriceSliderMax;
+        const priceRangeStep = @Model.PriceSliderStep;
+        let minPrice = priceRangeMin;
+        let maxPrice = priceRangeMax;
+        let priceDebounceTimer = null;
 
-             // 2. Inițializare Slider și Evenimente la încărcarea paginii
-             document.addEventListener('DOMContentLoaded', function() {
-                 const slider = document.getElementById('priceSlider');
+        function setSortActive(id) {
+            document.querySelectorAll('.btn-sort').forEach(b => b.classList.remove('active'));
+            document.getElementById(id)?.classList.add('active');
+        }
 
-                 // Inițializare noUiSlider (dacă nu e deja inițializat)
-                 if (slider && !slider.noUiSlider) {
-                     noUiSlider.create(slider, {
-                         start: [0, 150],
-                         connect: true,
-                         range: { min: 0, max: 150 },
-                         tooltips: true,
-                         format: { to: v => Math.round(v) + " RON", from: v => Number(v.replace(' RON','')) }
-                     });
+        function readPriceFromSlider() {
+            const slider = document.getElementById('priceSlider');
+            if (!slider?.noUiSlider) return;
+            const values = slider.noUiSlider.get();
+            minPrice = Math.round(Number(values[0]));
+            maxPrice = Math.round(Number(values[1]));
+        }
 
-                     slider.noUiSlider.on('change', (values) => {
-                         minPrice = parseInt(values[0]);
-                         maxPrice = parseInt(values[1]);
-                         currentPage = 1; // Resetăm la prima pagină când filtrăm
-                         updateProducts();
-                     });
-                 }
+        function showMessage(msg, isError) {
+            const container = document.getElementById('messageContainer');
+            const alertClass = isError ? 'alert-danger' : 'alert-success';
+            container.innerHTML = `<div class="alert ${alertClass} alert-dismissible fade show shadow-sm" role="alert">
+                ${msg}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>`;
+            setTimeout(() => {
+                const alertEl = container.querySelector('.alert');
+                if (alertEl) bootstrap.Alert.getOrCreateInstance(alertEl).close();
+            }, 3000);
+        }
 
-                 // Atașăm evenimente pentru Căutare, Categorie și Sortare
-                 document.getElementById('searchInput').oninput = () => { currentPage = 1; updateProducts(); };
-                 document.getElementById('categorySelect').onchange = (e) => { currentCategory = e.target.value; currentPage = 1; updateProducts(); };
+        document.addEventListener('DOMContentLoaded', function() {
+            const slider = document.getElementById('priceSlider');
+            if (slider && !slider.noUiSlider) {
+                noUiSlider.create(slider, {
+                    start: [priceRangeMin, priceRangeMax],
+                    connect: true,
+                    step: priceRangeStep,
+                    range: { min: priceRangeMin, max: priceRangeMax },
+                    tooltips: {
+                        to: v => Math.round(v) + ' RON',
+                        from: v => Number(v)
+                    }
+                });
+                const onPriceChange = () => {
+                    readPriceFromSlider();
+                    currentPage = 1;
+                    clearTimeout(priceDebounceTimer);
+                    priceDebounceTimer = setTimeout(() => updateProducts(), 120);
+                };
+                slider.noUiSlider.on('update', onPriceChange);
+                slider.noUiSlider.on('change', () => {
+                    readPriceFromSlider();
+                    currentPage = 1;
+                    clearTimeout(priceDebounceTimer);
+                    updateProducts();
+                });
+            }
 
-                 document.getElementById('sortNameAsc').onclick = () => { currentSort = "NameAsc"; updateProducts(); };
-                 document.getElementById('sortNameDesc').onclick = () => { currentSort = "NameDesc"; updateProducts(); };
-                 document.getElementById('sortPriceAsc').onclick = () => { currentSort = "PriceAsc"; updateProducts(); };
-                 document.getElementById('sortPriceDesc').onclick = () => { currentSort = "PriceDesc"; updateProducts(); };
+            document.getElementById('searchInput').oninput = () => { currentPage = 1; updateProducts(); };
+            document.getElementById('categorySelect').onchange = (e) => { currentCategory = e.target.value; currentPage = 1; updateProducts(); };
+            document.getElementById('sortNameAsc').onclick = () => { setSortActive('sortNameAsc'); currentSort = "NameAsc"; currentPage = 1; updateProducts(); };
+            document.getElementById('sortNameDesc').onclick = () => { setSortActive('sortNameDesc'); currentSort = "NameDesc"; currentPage = 1; updateProducts(); };
+            document.getElementById('sortPriceAsc').onclick = () => { setSortActive('sortPriceAsc'); currentSort = "PriceAsc"; currentPage = 1; updateProducts(); };
+            document.getElementById('sortPriceDesc').onclick = () => { setSortActive('sortPriceDesc'); currentSort = "PriceDesc"; currentPage = 1; updateProducts(); };
 
-                 // Prima inițializare a evenimentelor (pentru paginarea care vine direct din server)
-                 bindAll();
-             });
+            document.getElementById('increaseQty').onclick = () => adjustQty(1);
+            document.getElementById('decreaseQty').onclick = () => adjustQty(-1);
+            document.getElementById('modalAddToCartBtn').onclick = addToCartFromModal;
 
-             // 3. Funcția principală de update (AJAX)
-             function updateProducts(scrollToTop = false) {
-                 const searchInput = document.getElementById('searchInput').value;
-                 const container = document.getElementById('productsContainer');
+            bindAll();
+        });
 
-                 // Construim URL-ul cu TOȚI parametrii necesari
-                 const url = `?handler=Search&searchString=${encodeURIComponent(searchInput)}` +
-                             `&sortOrder=${encodeURIComponent(currentSort)}` +
-                             `&category=${encodeURIComponent(currentCategory)}` +
-                             `&minPrice=${minPrice}` +
-                             `&maxPrice=${maxPrice}` +
-                             `&pageNumber=${currentPage}`;
+        function adjustQty(change) {
+            const input = document.getElementById('quantityInput');
+            const val = Math.max(1, (parseInt(input.value) || 1) + change);
+            input.value = val;
+            document.getElementById('productQtyInput').value = val;
+            const unit = parseFloat(document.getElementById('modalPrice').dataset.unitPrice);
+            document.getElementById('modalPrice').textContent = (unit * val).toFixed(2) + " RON";
+        }
 
-                 fetch(url)
-                     .then(res => res.text())
-                     .then(html => {
-                         container.innerHTML = html;
-                         bindAll(); // RE-ATAȘĂM evenimentele după ce am pus HTML nou
-                         if (scrollToTop) window.scrollTo({ top: 0, behavior: 'smooth' });
-                     });
-             }
+        function updateProducts(scrollToTop = false) {
+            readPriceFromSlider();
+            const searchInput = document.getElementById('searchInput').value;
+            const container = document.getElementById('productsContainer');
+            const url = `?handler=Search&searchString=${encodeURIComponent(searchInput)}` +
+                `&sortOrder=${encodeURIComponent(currentSort)}` +
+                `&category=${encodeURIComponent(currentCategory)}` +
+                `&minPrice=${minPrice}&maxPrice=${maxPrice}` +
+                `&pageNumber=${currentPage}`;
 
-             // 4. Gruparea tuturor legăturilor de evenimente
-             function bindAll() {
-                 bindPagination();
-                 bindProductImages(); // Pentru modal
-                 bindFavorites();
-                
-             }
+            fetch(url)
+                .then(res => res.text())
+                .then(html => {
+                    container.innerHTML = html;
+                    bindAll();
+                    if (scrollToTop) window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+        }
 
-             function bindPagination() {
-                 document.querySelectorAll('.pagination-link').forEach(link => {
-                     link.onclick = function(e) {
-                         e.preventDefault();
-                         const page = this.dataset.page;
-                         if(page) {
-                             currentPage = parseInt(page);
-                             updateProducts(true);
-                         }
-                     };
-                 });
-             }
+        function bindAll() {
+            bindPagination();
+            bindProductImages();
+            bindFavorites();
+        }
 
-             function bindProductImages() {
-                 document.querySelectorAll('.product-image').forEach(img => {
-                     img.onclick = function() {
-                         const d = this.dataset;
-                         updateModalContent(d.id, d.name, d.price, d.description, this.src);
-                         const modal = new bootstrap.Modal(document.getElementById('productModal'));
-                         modal.show();
-                     };
-                 });
-             }
-
-            function bindFavorites() {
-                document.querySelectorAll('.fav-btn').forEach(btn => {
-                    btn.onclick = async (e) => {
-                        e.preventDefault();
-                        e.stopPropagation(); // Prevenim deschiderea modalului dacă butonul e peste imagine
-
-                        const productId = btn.dataset.id;
-                        // Căutăm token-ul în pagină
-                        const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-                        try {
-                            const response = await fetch(`?handler=ToggleFavorite&productId=${productId}`, {
-                                method: 'POST',
-                                headers: {
-                                    'RequestVerificationToken': token
-                                }
-                            });
-
-                            const data = await response.json();
-
-                            if (data.success) {
-                                const icon = btn.querySelector('i');
-                                if (data.isFavorite) {
-                                    icon.classList.replace('bi-heart', 'bi-heart-fill');
-                                    icon.classList.add('active');
-                                    showMessage("Produs adăugat la favorite!");
-                                } else {
-                                    icon.classList.replace('bi-heart-fill', 'bi-heart');
-                                    icon.classList.remove('active');
-                                    showMessage("Produs eliminat de la favorite.");
-                                }
-                            }
-                        } catch (error) {
-                            console.error("Eroare la favorite:", error);
-                        }
-                    };
+        function bindPagination() {
+            document.querySelectorAll('.pagination-link').forEach(link => {
+                link.onclick = function(e) {
+                    e.preventDefault();
+                    const page = this.dataset.page;
+                    if (page) {
+                        currentPage = parseInt(page);
+                        updateProducts(true);
+                    }
+                };
             });
         }
 
-             // Logica Modalului rămâne aceeași
-             function updateModalContent(id, name, price, desc, imgSrc) {
-                    // Actualizăm textele
-                    document.getElementById('modalName').textContent = name;
-                    document.getElementById('modalPrice').textContent = parseFloat(price).toFixed(2) + " RON";
-                    document.getElementById('modalPrice').dataset.unitPrice = price;
-                    document.getElementById('modalDescription').textContent = desc || "Fără descriere.";
-
-                    // REPARARE IMAGINE: Ne asigurăm că imaginea primește noul URL
-                    const modalImg = document.getElementById('modalImage');
-                    modalImg.src = imgSrc;
-
-                    // Fallback în caz că imaginea produsului lipsește fizic de pe disc
-                    modalImg.onerror = function() {
-                        this.src = '/Imagini/default.jpg';
-                    };
-
-                    document.getElementById('productIdInput').value = id;
-                    document.getElementById('quantityInput').value = 1;
-                    document.getElementById('productQtyInput').value = 1;
-
-                    // Reîncărcăm recomandările pentru noul produs afișat
-                    loadRecommendations(id);
-             }
-
-            function loadRecommendations(productId) {
-                const recList = document.getElementById('recommendationsList');
-                recList.innerHTML = '<div class="text-center p-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
-
-                fetch(`?handler=Recommendations&productId=${productId}`)
-                    .then(res => res.json())
-                    .then(data => {
-                          recList.innerHTML = '';
-                          data.forEach(p => {
-                             // Sincronizăm proprietățile pentru a evita imaginile goale
-                             const imgFile = p.imagine || p.Imagine || 'default.jpg';
-                             const pName = p.name || p.Name;
-                             const pPrice = p.price || p.Price;
-                             const pDesc = (p.description || p.Description || "").replace(/'/g, "\\'");
-                             const pId = p.id || p.Id;
-
-                            const recCard = document.createElement('div');
-                            recCard.className = 'card mb-2 border-0 shadow-sm recommendation-card';
-                            recCard.style.cursor = 'pointer';
-                            recCard.innerHTML = `
-                                <div class="row g-0 align-items-center p-1">
-                                    <div class="col-4 text-center">
-                                        <img src="/Imagini/${imgFile}" class="img-fluid rounded shadow-sm"
-                                             style="height: 55px; width: 55px; object-fit: cover;"
-                                             onerror="this.src='/Imagini/default.jpg'">
-                                    </div>
-                                    <div class="col-8 ps-2 text-start">
-                                        <div class="small fw-bold text-truncate" style="font-size: 0.8rem;">${pName}</div>
-                                        <div class="small text-success" style="font-size: 0.75rem;">${parseFloat(pPrice).toFixed(2)} RON</div>
-                                    </div>
-                                </div>`;
-
-                            // Când dai click pe recomandare, modalul se actualizează complet
-                            recCard.onclick = () => updateModalContent(pId, pName, pPrice, pDesc, `/Imagini/${imgFile}`);
-                            recList.appendChild(recCard);
-                        });
-                    });
+        function bindProductImages() {
+            document.querySelectorAll('.product-image').forEach(img => {
+                img.onclick = function() {
+                    const d = this.dataset;
+                    updateModalContent(d.id, d.name, d.price, d.description, this.src);
+                    new bootstrap.Modal(document.getElementById('productModal')).show();
+                };
+            });
         }
 
-             // Cantitate Modal
-             document.getElementById('increaseQty').onclick = () => {
-                 const input = document.getElementById('quantityInput');
-                 input.value = parseInt(input.value) + 1;
-             };
-             document.getElementById('decreaseQty').onclick = () => {
-                 const input = document.getElementById('quantityInput');
-                 if(input.value > 1) input.value = parseInt(input.value) - 1;
-             };
+        function bindFavorites() {
+            document.querySelectorAll('.fav-btn').forEach(btn => {
+                btn.onclick = async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const productId = btn.dataset.id;
+                    const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                    try {
+                        const response = await fetch(`?handler=ToggleFavorite&productId=${productId}`, {
+                            method: 'POST',
+                            headers: { 'RequestVerificationToken': token }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            if (data.isFavorite) {
+                                btn.classList.add('is-favorite');
+                                btn.textContent = 'Salvat';
+                                showMessage("Produs adăugat la favorite!");
+                            } else {
+                                btn.classList.remove('is-favorite');
+                                btn.textContent = 'Salvează';
+                                showMessage("Produs eliminat de la favorite.");
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Eroare la favorite:", error);
+                    }
+                };
+            });
+        }
 
-             // Add To Cart AJAX
-             document.getElementById('modalAddToCartBtn').onclick = () => {
-                 const id = document.getElementById('productIdInput').value;
-                 const qty = document.getElementById('quantityInput').value;
-                 const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+        function updateModalContent(id, name, price, desc, imgSrc) {
+            document.getElementById('modalName').textContent = name;
+            const unit = parseFloat(price);
+            document.getElementById('modalPrice').dataset.unitPrice = unit;
+            document.getElementById('modalPrice').textContent = unit.toFixed(2) + " RON";
+            document.getElementById('modalDescription').textContent = desc || "Fără descriere.";
+            const modalImg = document.getElementById('modalImage');
+            modalImg.src = imgSrc;
+            modalImg.onerror = function() { this.src = IMG_NOT_FOUND; };
+            document.getElementById('productIdInput').value = id;
+            document.getElementById('quantityInput').value = 1;
+            document.getElementById('productQtyInput').value = 1;
+            loadRecommendations(id);
+        }
 
-                 const params = new URLSearchParams({ id: id, quantity: qty });
-                 fetch('?handler=AddToCart', {
-                     method: 'POST',
-                     headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
-                     body: params
-                 }).then(res => {
-                     if(res.ok) {
-                         alert("Produs adăugat!");
-                         bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
-                     }
-                 });
-             };
+        function loadRecommendations(productId) {
+            const recList = document.getElementById('recommendationsList');
+            recList.innerHTML = '<div class="text-center mt-4"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
 
+            fetch(`?handler=Recommendations&productId=${productId}`)
+                .then(res => res.json())
+                .then(data => {
+                    recList.innerHTML = '';
+                    if (!data || data.length === 0) {
+                        recList.innerHTML = '<p class="text-muted small text-center">Nicio recomandare.</p>';
+                        return;
+                    }
+                    data.forEach(p => {
+                        const imgSrc = p.imageUrl || p.ImageUrl || IMG_NOT_FOUND;
+                        const pName = p.name || p.Name;
+                        const pPrice = p.price || p.Price;
+                        const pDesc = p.description || p.Description || '';
+                        const pId = p.id || p.Id;
+
+                        const recCard = document.createElement('div');
+                        recCard.className = 'card mb-2 border-0 shadow-sm recommendation-card';
+                        recCard.style.cursor = 'pointer';
+                        recCard.style.overflow = 'hidden';
+                        recCard.innerHTML = `
+                            <img src="${imgSrc}" style="height:70px; object-fit:cover; width:100%;"
+                                 onerror="this.src='${IMG_NOT_FOUND}'">
+                            <div class="p-2 text-center">
+                                <div class="small fw-bold text-truncate"></div>
+                                <div class="small text-success"></div>
+                            </div>`;
+                        recCard.querySelector('.fw-bold').textContent = pName;
+                        recCard.querySelector('.text-success').textContent = parseFloat(pPrice).toFixed(2) + ' RON';
+                        recCard.addEventListener('click', () => {
+                            updateModalContent(pId, pName, pPrice, pDesc, imgSrc);
+                        });
+                        recList.appendChild(recCard);
+                    });
+                });
+        }
+
+        function addToCartFromModal() {
+            const id = document.getElementById('productIdInput').value;
+            const qty = document.getElementById('quantityInput').value;
+            const name = document.getElementById('modalName').textContent;
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+            const params = new URLSearchParams({ id: id, quantity: qty });
+            fetch('?handler=AddToCart', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token, 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: params
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage(data.message || `"${name}" adăugat în coș!`);
+                    bootstrap.Modal.getInstance(document.getElementById('productModal')).hide();
+                } else {
+                    showMessage(data.message || 'Stoc insuficient.', true);
+                }
+            })
+            .catch(() => showMessage('Eroare la adăugare în coș.', true));
+        }
     </script>
 }
-    <style>
-        .recommendation-card:hover {
-            transform: translateY(-2px);
-            transition: 0.2s;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
-        }
-
-        .product-image:hover {
-            opacity: 0.8;
-            transition: 0.3s;
-        }
-    </style>

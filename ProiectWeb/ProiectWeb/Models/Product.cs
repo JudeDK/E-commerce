@@ -16,6 +16,10 @@ namespace ProiectWeb.Models
         [Range(0, double.MaxValue, ErrorMessage = "Price must be positive")]
         public decimal Price { get; set; }
 
+        /// <summary>Cost achiziție — folosit la regulile AI de marjă minimă.</summary>
+        [Range(0, double.MaxValue)]
+        public decimal AcquisitionCost { get; set; }
+
         public string? Description { get; set; }
 
         [Required(ErrorMessage = "Category is required")]

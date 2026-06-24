@@ -53,28 +53,21 @@ namespace ProiectWeb.Areas.Identity.Pages.Account.Manage
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
             /// </summary>
-            [Required]
+            [Required(ErrorMessage = "Parola actuală este obligatorie.")]
             [DataType(DataType.Password)]
-            [Display(Name = "Current password")]
+            [Display(Name = "Parola actuală")]
             public string OldPassword { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [Required(ErrorMessage = "Parola nouă este obligatorie.")]
+            [StringLength(100, ErrorMessage = "Parola nouă trebuie să aibă între {2} și {1} caractere.", MinimumLength = 6)]
             [DataType(DataType.Password)]
-            [Display(Name = "New password")]
+            [Display(Name = "Parola nouă")]
             public string NewPassword { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
+            [Required(ErrorMessage = "Confirmarea parolei este obligatorie.")]
             [DataType(DataType.Password)]
-            [Display(Name = "Confirm new password")]
-            [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
+            [Display(Name = "Confirmă parola nouă")]
+            [Compare("NewPassword", ErrorMessage = "Parola nouă și confirmarea nu coincid.")]
             public string ConfirmPassword { get; set; }
         }
 
@@ -108,6 +101,19 @@ namespace ProiectWeb.Areas.Identity.Pages.Account.Manage
                 return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
             }
 
+            if (!await _userManager.CheckPasswordAsync(user, Input.OldPassword))
+            {
+                ModelState.AddModelError(nameof(Input.OldPassword), "Parola actuală este incorectă.");
+                return Page();
+            }
+
+            if (Input.OldPassword == Input.NewPassword
+                || await _userManager.CheckPasswordAsync(user, Input.NewPassword))
+            {
+                ModelState.AddModelError(nameof(Input.NewPassword), "Parola nouă trebuie să fie diferită de parola actuală.");
+                return Page();
+            }
+
             var changePasswordResult = await _userManager.ChangePasswordAsync(user, Input.OldPassword, Input.NewPassword);
             if (!changePasswordResult.Succeeded)
             {
@@ -120,7 +126,7 @@ namespace ProiectWeb.Areas.Identity.Pages.Account.Manage
 
             await _signInManager.RefreshSignInAsync(user);
             _logger.LogInformation("User changed their password successfully.");
-            StatusMessage = "Your password has been changed.";
+            StatusMessage = "Parola a fost schimbată cu succes.";
 
             return RedirectToPage();
         }
